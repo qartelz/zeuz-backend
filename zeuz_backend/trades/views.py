@@ -258,15 +258,24 @@ class TradeCreateView(APIView):
 
 
             elif trade_type == "Sell" and existing_trade.trade_type == "Buy" and existing_trade.trade_status == "incomplete":
-                # Handle sell logic for an existing buy trade (Sell + Buy)
+            # Validate the requested quantity
                 if quantity > existing_trade.quantity:
                     return Response(
-                        {"error": "Cannot sell more than the available quantity."},
+                        {"error": "Cannot sell more than the available buy quantity."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+                
+                # Calculate profit/loss for this transaction (Buy + Sell Scenario)
+                profit_loss = (trade_price - existing_trade.avg_price) * quantity
+                print(profit_loss)
 
-                existing_trade.quantity -= quantity
-                existing_trade.save()
+                # Record the Sell in ClosedTrades
+                ClosedTrades.objects.create(
+                    trade=existing_trade,
+                    sell_quantity=quantity,
+                    sell_price=trade_price,
+                    profit_loss=profit_loss,
+                )
 
                 # Add to TradeHistory
                 TradeHistory.objects.create(
@@ -276,13 +285,31 @@ class TradeCreateView(APIView):
                     trade_price=trade_price,
                 )
 
+                # Adjust the existing trade quantity
+                existing_trade.quantity -= quantity
+
+                # If the trade is now fully completed, mark it as complete
+                if existing_trade.quantity == 0:
+                    existing_trade.trade_status = "complete"
+
+                # Save the updated trade state
+                existing_trade.save()
+
+                # Build response message
+                message = (
+                    "Trade completed and recorded." if existing_trade.trade_status == "complete"
+                    else "Partial trade executed and recorded."
+                )
+
                 return Response(
                     {
-                        "message": "Sell trade executed for existing buy trade.",
-                        "data": TradesTakenSerializer(existing_trade).data,
+                        "message": message,
+                        "trade_history": TradeHistory.objects.filter(trade=existing_trade).values(),
+                        "closed_trades": ClosedTrades.objects.filter(trade=existing_trade).values(),
                     },
                     status=status.HTTP_200_OK,
                 )
+
             
 
             elif trade_type == "Sell" and existing_trade.trade_type == "Sell" and existing_trade.trade_status == "incomplete":
