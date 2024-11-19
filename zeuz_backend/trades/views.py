@@ -397,6 +397,10 @@ class TradeCreateView(APIView):
                         quantity=quantity,
                         trade_price=trade_price,
                     )
+                    try:
+                        beetle_coins.use_coins(invested_amount)
+                    except ValidationError as e:
+                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
                     return Response(
                         {
@@ -427,6 +431,10 @@ class TradeCreateView(APIView):
                 quantity=quantity,
                 trade_price=trade_price,
             )
+            try:
+                beetle_coins.use_coins(invested_amount)
+            except ValidationError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response(
                 {"message": "New trade created.", "data": serializer.data},
