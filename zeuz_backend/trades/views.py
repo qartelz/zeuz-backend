@@ -157,6 +157,7 @@ class TradeCreateView(APIView):
         trade_price = data.get("avg_price")
         quantity = data.get("quantity")
         invested_amount = data.get("invested_coin")
+        print(ticker,trade_type,trade_price,quantity,invested_amount)
 
         # Validate required fields
         if not ticker or not trade_type or not trade_price or not quantity:
@@ -167,20 +168,25 @@ class TradeCreateView(APIView):
 
         # Check if an existing trade exists for this user and ticker
         existing_trade = TradesTaken.objects.filter(user=user, ticker=ticker).first()
+        print(existing_trade)
+
         try:
             beetle_coins = BeetleCoins.objects.get(user=user)
         except BeetleCoins.DoesNotExist:
             return Response({"error": "User's Beetle Coins record not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if beetle_coins.coins < invested_amount:
-            return Response(
-                {"error": "Insufficient Beetle Coins to execute the trade."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # if beetle_coins.coins < invested_amount:
+        #     return Response(
+        #         {"error": "Insufficient Beetle Coins to execute the trade."},
+        #         status=status.HTTP_400_BAD_REQUEST,
+        #     )
 
         if existing_trade:
+            print("Already")
             # Handle different conditions based on `trade_type` and `trade_status`
+            print(trade_type,existing_trade.trade_type,existing_trade.trade_status)
             if trade_type == "Buy" and existing_trade.trade_type == "Buy" and existing_trade.trade_status == "incomplete":
+                print("here")
                 # Update the existing trade (Buy + Buy)
                 existing_trade.avg_price = (
                     (existing_trade.avg_price * existing_trade.quantity + trade_price * quantity)
@@ -284,6 +290,7 @@ class TradeCreateView(APIView):
 
 
             elif trade_type == "Sell" and existing_trade.trade_type == "Buy" and existing_trade.trade_status == "incomplete":
+           
             # Validate the requested quantity
                 if quantity > existing_trade.quantity:
                     return Response(
@@ -378,51 +385,53 @@ class TradeCreateView(APIView):
                     },
                     status=status.HTTP_200_OK,
                 )
+        #     else:
+        #         if existing_trade and existing_trade.trade_status == "complete":
+        #             # Create a new trade since the existing one is complete
+        #             new_trade = TradesTaken.objects.create(
+        #                 user=user,
+        #                 ticker=ticker,
+        #                 trade_type=trade_type,
+        #                 avg_price=trade_price,
+        #                 quantity=quantity,
+        #                 trade_status="incomplete",  
+        #             )
+
+        #             # Record this new trade in TradeHistory
+        #             TradeHistory.objects.create(
+        #                 trade=new_trade,
+        #                 trade_type=trade_type,
+        #                 quantity=quantity,
+        #                 trade_price=trade_price,
+        #             )
+        #             try:
+        #                 beetle_coins.use_coins(invested_amount)
+        #             except ValidationError as e:
+        #                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        #             return Response(
+        #                 {
+        #                     "message": "New trade created for the completed ticker.",
+        #                     "data": TradesTakenSerializer(new_trade).data,
+        #                 },
+        #                 status=status.HTTP_201_CREATED,
+        # )
+
+
             else:
-                if existing_trade and existing_trade.trade_status == "complete":
-                    # Create a new trade since the existing one is complete
-                    new_trade = TradesTaken.objects.create(
-                        user=user,
-                        ticker=ticker,
-                        trade_type=trade_type,
-                        avg_price=trade_price,
-                        quantity=quantity,
-                        trade_status="incomplete",  # New trades start as incomplete
-                    )
-
-                    # Record this new trade in TradeHistory
-                    TradeHistory.objects.create(
-                        trade=new_trade,
-                        trade_type=trade_type,
-                        quantity=quantity,
-                        trade_price=trade_price,
-                    )
-                    try:
-                        beetle_coins.use_coins(invested_amount)
-                    except ValidationError as e:
-                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-                    return Response(
-                        {
-                            "message": "New trade created for the completed ticker.",
-                            "data": TradesTakenSerializer(new_trade).data,
-                        },
-                        status=status.HTTP_201_CREATED,
-        )
-
-
-            # else:
-            #     return Response(
-            #         {"error": "Invalid trade update scenario."},
-            #         status=status.HTTP_400_BAD_REQUEST,
-            #     )
+                return Response(
+                    {"error": "Invalid trade update scenario."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         # If no existing trade, create a new one
         data["user"] = user.id  # Add user to the data
         serializer = TradesTakenSerializer(data=data)
 
         if serializer.is_valid():
+            
             new_trade = serializer.save()
+            print(new_trade)
 
             # Add to TradeHistory
             TradeHistory.objects.create(
@@ -437,7 +446,7 @@ class TradeCreateView(APIView):
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response(
-                {"message": "New trade created.", "data": serializer.data},
+                {"message": "New trade created.......", "data": serializer.data},
                 status=status.HTTP_201_CREATED,
             )
         else:

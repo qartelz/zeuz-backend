@@ -125,3 +125,17 @@ class TradingInstrumentSearchView(APIView):
 
 
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import TradingInstrument
+from .serializers import ScriptGroupedDataSerializer
+
+class GroupedOptionsView(APIView):
+    def get(self, request, *args, **kwargs):
+        script_name = request.query_params.get('script_name', None)
+        if not script_name:
+            return Response({"error": "script_name is required"}, status=400)
+
+        queryset = TradingInstrument.objects.filter(script_name=script_name, segment='OPT')
+        serialized_data = ScriptGroupedDataSerializer({'script_name': script_name}).data
+        return Response(serialized_data)
