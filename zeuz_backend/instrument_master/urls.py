@@ -5,5 +5,6 @@ urlpatterns = [
    
      path('upload-csv/', CSVUploadView.as_view(), name='upload-csv'),
      path('search/', TradingInstrumentSearchView.as_view(), name='trading_instrument_search'),
-     path('optionchain/',GroupedOptionsView.as_view(), name='option_chain')
+     path('optionchain/',GroupedOptionsView.as_view(), name='option_chain'),
+     # path('option-chain/',OptionChainViews.as_view(), name='option_chain')
 ]

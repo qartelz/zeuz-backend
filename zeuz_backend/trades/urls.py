@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import TradesTakenView,TradeCreateView,UserTradesView
+from .views import TradeCreateView,UserTradesView
 # from .views import TradesTakenView, ClosedTradesView, TradeHistoryView
 
 urlpatterns = [
