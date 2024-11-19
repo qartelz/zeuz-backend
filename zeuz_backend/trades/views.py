@@ -224,7 +224,8 @@ class TradeCreateView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 
-                profit_loss = (existing_trade.avg_price - trade_price) * quantity
+                profit_loss = (float(existing_trade.avg_price) -float(trade_price)) * quantity
+
                 # Calculate profit/loss for this transaction (Short Selling Scenario)
 
                
@@ -263,6 +264,7 @@ class TradeCreateView(APIView):
                 # Save the updated trade state
                 existing_trade.save()
                 invested_amount = (existing_trade.avg_price * quantity) + profit_loss
+                beetle_coins.coins+=profit_loss
 
                 # Check and deduct Beetle Coins before proceeding
                 try:
@@ -299,7 +301,7 @@ class TradeCreateView(APIView):
                     )
                 
                 # Calculate profit/loss for this transaction (Buy + Sell Scenario)
-                profit_loss = (trade_price - existing_trade.avg_price) * quantity
+                profit_loss = (float(trade_price) - float(existing_trade.avg_price)) * quantity
                 print(profit_loss)
 
                 # Record the Sell in ClosedTrades
@@ -321,6 +323,7 @@ class TradeCreateView(APIView):
                 # Adjust the existing trade quantity
                 existing_trade.quantity -= quantity
                 existing_trade.invested_coin-=invested_amount
+                beetle_coins.coins+=profit_loss
 
                 # If the trade is now fully completed, mark it as complete
                 if existing_trade.quantity == 0:
