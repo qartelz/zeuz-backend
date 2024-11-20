@@ -238,7 +238,7 @@ class TradeCreateView(APIView):
 
                 # Adjust the existing trade quantity
                 existing_trade.quantity -= quantity
-                existing_trade.invested_coin-=invested_amount
+                existing_trade.invested_coin=existing_trade.quantity*existing_trade.avg_price
                 beetle_coins.coins+=profit_loss
 
                 # If the trade is now fully completed, mark it as complete
@@ -337,7 +337,38 @@ class TradeCreateView(APIView):
                     )
                 else:
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            elif trade_type == "Buy" or trade_type  == "Sell" and existing_trade.quantity == 0 and existing_trade.trade_status == "completed":
+                print("here")
+                # Create a new trade since the existing one is complete
+                data["user"] = user.id  # Associate the new trade with the user
+                serializer = TradesTakenSerializer(data=data)  # Use serializer to validate and create new trade data
 
+                if serializer.is_valid():
+                    new_trade = serializer.save()  # Save the new trade
+                    print(f"New trade created: {new_trade}")
+
+                    # Add the new trade to TradeHistory
+                    TradeHistory.objects.create(
+                        trade=new_trade,
+                        trade_type=trade_type,
+                        quantity=quantity,
+                        trade_price=trade_price,
+                    )
+
+                    # Deduct invested coins for the new trade
+                    try:
+                        beetle_coins.use_coins(invested_amount)
+                    except ValidationError as e:
+                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+                    return Response(
+                        {
+                            "message": "New trade created as the previous one was complete.",
+                            "data": TradesTakenSerializer(new_trade).data,
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
 
             else:
                 return Response(
@@ -473,7 +504,7 @@ class FuturesCreateView(APIView):
                     
                     # Adjust the existing trade quantity
                     existing_trade.quantity -= quantity
-                    existing_trade.invested_coin-=invested_amount
+                    existing_trade.invested_coin=existing_trade.quantity*existing_trade.avg_price
 
                     # If the trade is now fully completed, mark it as complete
                     if existing_trade.quantity == 0:
@@ -538,7 +569,7 @@ class FuturesCreateView(APIView):
 
                 # Adjust the existing trade quantity
                 existing_trade.quantity -= quantity
-                existing_trade.invested_coin-=invested_amount
+                existing_trade.invested_coin=existing_trade.quantity*existing_trade.avg_price
                 beetle_coins.coins+=profit_loss
 
                 # If the trade is now fully completed, mark it as complete
@@ -578,7 +609,7 @@ class FuturesCreateView(APIView):
                     / (existing_trade.quantity + quantity)
                 )
                 existing_trade.quantity += quantity
-                existing_trade.invested_coin+=invested_amount
+                existing_trade.invested_coin=existing_trade.quantity*existing_trade.avg_price
                 existing_trade.save()
 
                 # Add to TradeHistory
@@ -774,7 +805,7 @@ class OptionCreateView(APIView):
                     
                     # Adjust the existing trade quantity
                     existing_trade.quantity -= quantity
-                    existing_trade.invested_coin-=invested_amount
+                    existing_trade.invested_coin=existing_trade.quantity*existing_trade.avg_price
 
                     # If the trade is now fully completed, mark it as complete
                     if existing_trade.quantity == 0:
@@ -839,7 +870,8 @@ class OptionCreateView(APIView):
 
                 # Adjust the existing trade quantity
                 existing_trade.quantity -= quantity
-                existing_trade.invested_coin-=invested_amount
+                # existing_trade.invested_coin-=invested_amount
+                existing_trade.invested_coin=existing_trade.quantity*existing_trade.avg_price
                 beetle_coins.coins+=profit_loss
 
                 # If the trade is now fully completed, mark it as complete
