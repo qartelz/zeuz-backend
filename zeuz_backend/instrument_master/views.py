@@ -72,56 +72,36 @@ from .serializers import TradingInstrumentSerializer
 from rest_framework.permissions import AllowAny
 
 class TradingInstrumentSearchView(APIView):
-
     permission_classes = [AllowAny]
-    def get(self, request, *args, **kwargs):
 
+    def get(self, request, *args, **kwargs):
         exchange = request.query_params.get('exchange', None)
         segment = request.query_params.get('segment', None)
-        print(exchange,segment)
+        script_name = request.query_params.get('script_name', None)
         
+        print(exchange, segment, script_name)
+
         if exchange not in ['NSE', 'NFO']:
-            
             return Response({"detail": "Invalid exchange, please use NSE or NFO."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        
+
         query = Q(exchange=exchange)
-        
-        
+
         if exchange == 'NFO' and segment:
             if segment not in ['FUT', 'OPT']:
                 return Response({"detail": "Invalid segment for NFO, please use FUT or OPT."}, status=status.HTTP_400_BAD_REQUEST)
             query &= Q(segment=segment)
-        
+
+            # If segment is OPT, filter by script_name as well
+            if segment == 'OPT':
+                if not script_name:
+                    return Response({"detail": "script_name is required for OPT segment."}, status=status.HTTP_400_BAD_REQUEST)
+                query &= Q(script_name=script_name)
+
         instruments = TradingInstrument.objects.filter(query)
 
-        
-
-        # instrument_data = [
-        #     {
-        #         "token_id": instrument.token_id,
-        #         "exchange": instrument.exchange,
-        #         "trading_symbol": instrument.trading_symbol,
-        #         "series": instrument.series,
-        #         "expiry_date": instrument.expiry_date,
-        #         "option_type": instrument.option_type,
-        #         "segment": instrument.segment,
-        #         "lot_size": instrument.lot_size,
-        #         "tick_size": instrument.tick_size,
-        #         "strike_price": instrument.strike_price,
-        #         "display_name": instrument.display_name,
-        #         "company_name": instrument.company_name,
-        #         "instrument_name": instrument.instrument_name,
-        #         "isin_number": instrument.isin_number
-        #     }
-        #     for instrument in instruments
-        # ]
-
-        # return Response(instrument_data, status=status.HTTP_200_OK)
-
         serializer = TradingInstrumentSerializer(instruments, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 
@@ -130,6 +110,7 @@ from rest_framework.response import Response
 from .models import TradingInstrument
 from collections import defaultdict
 from datetime import date
+
 class GroupedOptionsView(APIView):
     def get(self, request, *args, **kwargs):
         script_name = request.query_params.get('script_name', None)
@@ -207,8 +188,18 @@ class GroupedOptionsView(APIView):
             for expiry_date in sorted_expiries
         ]
 
-        # Final response structure
-        return {
+        data = {
             'unique_expiry_dates': sorted_expiries,  # All unique expiry dates
             'grouped_data': grouped_data  # Full grouped data
         }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+        # Final response structure
+#         return Response(
+#     {
+#         'unique_expiry_dates': sorted_expiries,  # All unique expiry dates
+#         'grouped_data': grouped_data  # Full grouped data
+#     },
+#     status=status.HTTP_200_OK
+# )

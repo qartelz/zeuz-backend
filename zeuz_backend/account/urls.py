@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SignUpView, LoginView, WelcomeView, OTPVerificationView, ForgotPasswordView, ResetPasswordView, ProfileCreateView, ProfileDetailView, ProfileUpdateView
+from .views import SignUpView, LoginView, WelcomeView, OTPVerificationView, ForgotPasswordView, ResetPasswordView, ProfileCreateView, ProfileDetailView, ProfileUpdateView,UserTradeSummaryView
 from rest_framework_simplejwt.views import TokenRefreshView
 # from trades.views import TradeOrderCreateView
 from .views import GetBeetleCoinsView
@@ -17,4 +17,6 @@ urlpatterns = [
 
     # path('trade-order/', TradeOrderCreateView.as_view(), name='trade-order-create'),
     path('get-beetle-coins/', GetBeetleCoinsView.as_view(), name='get_beetle_coins'),
+
+    path('trade-summary/', UserTradeSummaryView.as_view(), name='user-trade-summary'),
 ]

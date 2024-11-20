@@ -8,9 +8,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .utils import generate_otp, set_otp_in_cache, get_otp_from_cache, delete_otp_from_cache, send_otp_email
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import AccessToken, TokenError
-
-from .serializers import SignUpSerializer, LoginSerializer, OTPVerificationSerializer, ResetPasswordSerializer, ForgotPasswordSerializer, ProfileSerializer
-
+from trades.models import ClosedTrades
+from .serializers import SignUpSerializer, LoginSerializer, OTPVerificationSerializer, ResetPasswordSerializer, ForgotPasswordSerializer, ProfileSerializer,BeetleCoinsSerializer
+from django.db.models import Sum
 
 class SignUpView(APIView):
     # permission_classes = [AllowAny]
@@ -238,3 +238,33 @@ class GetBeetleCoinsView(APIView):
 
 
 
+
+class UserTradeSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Get all closed trades and calculate total profit/loss
+        total_profit_loss = ClosedTrades.objects.filter(trade__user=user).aggregate(
+            total_profit_loss=Sum('profit_loss')
+        )['total_profit_loss'] or 0
+
+        # Get user's BeetleCoins data
+        try:
+            beetle_coins = BeetleCoins.objects.get(user=user)
+        except BeetleCoins.DoesNotExist:
+            return Response(
+                {"error": "User does not have any BeetleCoins record."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        beetle_coins_serializer = BeetleCoinsSerializer(beetle_coins)
+
+        # Prepare response data
+        data = {
+            "total_profit_loss": float(total_profit_loss),  # Convert to float for JSON compatibility
+            "beetle_coins": beetle_coins_serializer.data,
+        }
+
+        return Response(data, status=status.HTTP_200_OK)

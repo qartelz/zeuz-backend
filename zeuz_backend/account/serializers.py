@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.password_validation import validate_password
 from .utils import generate_otp, set_otp_in_cache, send_otp_email
-from .models import Profile
+from .models import Profile,BeetleCoins
+from trades.models import ClosedTrades
 
 User = get_user_model()
 
@@ -60,3 +61,15 @@ class ProfileSerializer(serializers.ModelSerializer):
         user = self.context['user']
         validated_data['user'] = user
         return Profile.objects.create(**validated_data)
+    
+
+class ClosedTradesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClosedTrades
+        fields = ['sell_quantity', 'sell_price', 'sell_date', 'profit_loss']
+
+# Serializer for BeetleCoins
+class BeetleCoinsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BeetleCoins
+        fields = ['coins', 'used_coins']
