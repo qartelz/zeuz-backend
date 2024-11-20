@@ -92,6 +92,7 @@ class TradeCreateView(APIView):
 
         try:
             beetle_coins = BeetleCoins.objects.get(user=user)
+            print(beetle_coins)
         except BeetleCoins.DoesNotExist:
             return Response({"error": "User's Beetle Coins record not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -114,7 +115,11 @@ class TradeCreateView(APIView):
                 )
                 existing_trade.quantity += quantity
                 existing_trade.invested_coin+=invested_amount
+                
                 existing_trade.save()
+                beetle_coins.coins-=invested_amount
+                beetle_coins.used_coins+=invested_amount
+                beetle_coins.save()
 
                 # Add to TradeHistory
                 TradeHistory.objects.create(
@@ -123,10 +128,10 @@ class TradeCreateView(APIView):
                     quantity=quantity,
                     trade_price=trade_price,
                 )
-                try:
-                    beetle_coins.use_coins(invested_amount)
-                except ValidationError as e:
-                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                # try:
+                #     beetle_coins.use_coins(invested_amount)
+                # except ValidationError as e:
+                #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
                 return Response(
                     {
@@ -171,7 +176,8 @@ class TradeCreateView(APIView):
                 
                 # Adjust the existing trade quantity
                 existing_trade.quantity -= quantity
-                existing_trade.invested_coin-=invested_amount
+                existing_trade.invested_coin-=existing_trade.quantity*existing_trade.avg_price
+                
 
                 # If the trade is now fully completed, mark it as complete
                 if existing_trade.quantity == 0:
@@ -180,7 +186,9 @@ class TradeCreateView(APIView):
                 # Save the updated trade state
                 existing_trade.save()
                 invested_amount = (existing_trade.avg_price * quantity) + profit_loss
-                beetle_coins.coins+=profit_loss
+                beetle_coins.coins+=invested_amount
+                beetle_coins.used_coins-=invested_amount
+                beetle_coins.save()
 
                 # Check and deduct Beetle Coins before proceeding
                 try:
@@ -239,7 +247,7 @@ class TradeCreateView(APIView):
                 # Adjust the existing trade quantity
                 existing_trade.quantity -= quantity
                 existing_trade.invested_coin=existing_trade.quantity*existing_trade.avg_price
-                beetle_coins.coins+=profit_loss
+                # beetle_coins.coins+=profit_loss
 
                 # If the trade is now fully completed, mark it as complete
                 if existing_trade.quantity == 0:
@@ -247,6 +255,9 @@ class TradeCreateView(APIView):
 
                 # Save the updated trade state
                 existing_trade.save()
+                beetle_coins.coins+=invested_amount
+                beetle_coins.used_coins-=invested_amount
+                beetle_coins.save()
                 
                 invested_amount = (existing_trade.avg_price * quantity) + profit_loss
 
@@ -283,6 +294,9 @@ class TradeCreateView(APIView):
                 existing_trade.quantity += quantity
                 existing_trade.invested_coin+=invested_amount
                 existing_trade.save()
+                beetle_coins.coins-=invested_amount
+                beetle_coins.used_coins+=invested_amount
+                beetle_coins.save()
 
                 # Add to TradeHistory
                 TradeHistory.objects.create(
@@ -322,11 +336,15 @@ class TradeCreateView(APIView):
                         trade_price=trade_price,
                     )
 
+                    beetle_coins.coins-=invested_amount
+                    beetle_coins.used_coins+=invested_amount
+                    beetle_coins.save()
+
                     # Deduct invested coins for the new trade
-                    try:
-                        beetle_coins.use_coins(invested_amount)
-                    except ValidationError as e:
-                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                    # try:
+                    #     beetle_coins.use_coins(invested_amount)
+                    # except ValidationError as e:
+                    #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
                     return Response(
                         {
@@ -338,37 +356,37 @@ class TradeCreateView(APIView):
                 else:
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            elif trade_type == "Buy" or trade_type  == "Sell" and existing_trade.quantity == 0 and existing_trade.trade_status == "completed":
-                print("here")
-                # Create a new trade since the existing one is complete
-                data["user"] = user.id  # Associate the new trade with the user
-                serializer = TradesTakenSerializer(data=data)  # Use serializer to validate and create new trade data
+            # elif trade_type == "Buy" or trade_type  == "Sell" and existing_trade.quantity == 0 and existing_trade.trade_status == "completed":
+            #     print("here")
+            #     # Create a new trade since the existing one is complete
+            #     data["user"] = user.id  # Associate the new trade with the user
+            #     serializer = TradesTakenSerializer(data=data)  # Use serializer to validate and create new trade data
 
-                if serializer.is_valid():
-                    new_trade = serializer.save()  # Save the new trade
-                    print(f"New trade created: {new_trade}")
+            #     if serializer.is_valid():
+            #         new_trade = serializer.save()  # Save the new trade
+            #         print(f"New trade created: {new_trade}")
 
-                    # Add the new trade to TradeHistory
-                    TradeHistory.objects.create(
-                        trade=new_trade,
-                        trade_type=trade_type,
-                        quantity=quantity,
-                        trade_price=trade_price,
-                    )
+            #         # Add the new trade to TradeHistory
+            #         TradeHistory.objects.create(
+            #             trade=new_trade,
+            #             trade_type=trade_type,
+            #             quantity=quantity,
+            #             trade_price=trade_price,
+            #         )
 
-                    # Deduct invested coins for the new trade
-                    try:
-                        beetle_coins.use_coins(invested_amount)
-                    except ValidationError as e:
-                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            #         # Deduct invested coins for the new trade
+            #         try:
+            #             beetle_coins.use_coins(invested_amount)
+            #         except ValidationError as e:
+            #             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-                    return Response(
-                        {
-                            "message": "New trade created as the previous one was complete.",
-                            "data": TradesTakenSerializer(new_trade).data,
-                        },
-                        status=status.HTTP_201_CREATED,
-                    )
+            #         return Response(
+            #             {
+            #                 "message": "New trade created as the previous one was complete.",
+            #                 "data": TradesTakenSerializer(new_trade).data,
+            #             },
+            #             status=status.HTTP_201_CREATED,
+            #         )
 
             else:
                 return Response(
@@ -392,10 +410,14 @@ class TradeCreateView(APIView):
                 quantity=quantity,
                 trade_price=trade_price,
             )
-            try:
-                beetle_coins.use_coins(invested_amount)
-            except ValidationError as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+            beetle_coins.coins-=invested_amount
+            beetle_coins.used_coins+=invested_amount
+            beetle_coins.save()
+            # try:
+            #     beetle_coins.use_coins(invested_amount)
+            # except ValidationError as e:
+            #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response(
                 {"message": "New trade created.......", "data": serializer.data},
@@ -449,6 +471,10 @@ class FuturesCreateView(APIView):
                 existing_trade.invested_coin+=invested_amount
                 existing_trade.save()
 
+                beetle_coins.coins-=invested_amount
+                beetle_coins.used_coins+=invested_amount
+                beetle_coins.save()
+
                 # Add to TradeHistory
                 TradeHistory.objects.create(
                     trade=existing_trade,
@@ -456,10 +482,10 @@ class FuturesCreateView(APIView):
                     quantity=quantity,
                     trade_price=trade_price,
                 )
-                try:
-                    beetle_coins.use_coins(invested_amount)
-                except ValidationError as e:
-                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                # try:
+                #     beetle_coins.use_coins(invested_amount)
+                # except ValidationError as e:
+                #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
                 return Response(
                     {
@@ -512,14 +538,17 @@ class FuturesCreateView(APIView):
 
                     # Save the updated trade state
                     existing_trade.save()
-                    invested_amount = (existing_trade.avg_price * quantity) + profit_loss
-                    beetle_coins.coins+=profit_loss
+                    beetle_coins.coins+=invested_amount
+                    beetle_coins.used_coins-=invested_amount
+                    beetle_coins.save()
+                    # invested_amount = (existing_trade.avg_price * quantity) + profit_loss
+                    
 
                     # Check and deduct Beetle Coins before proceeding
-                    try:
-                        beetle_coins.use_coins(invested_amount)
-                    except ValidationError as e:
-                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                    # try:
+                    #     beetle_coins.use_coins(invested_amount)
+                    # except ValidationError as e:
+                    #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
                     
 
                     # Build response message
@@ -578,14 +607,17 @@ class FuturesCreateView(APIView):
 
                 # Save the updated trade state
                 existing_trade.save()
+                beetle_coins.coins+=invested_amount
+                beetle_coins.used_coins-=invested_amount
+                beetle_coins.save()
                 
-                invested_amount = (existing_trade.avg_price * quantity) + profit_loss
+                # invested_amount = (existing_trade.avg_price * quantity) + profit_loss
 
                 # Check and deduct Beetle Coins before proceeding
-                try:
-                    beetle_coins.use_coins(invested_amount)
-                except ValidationError as e:
-                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                # try:
+                #     beetle_coins.use_coins(invested_amount)
+                # except ValidationError as e:
+                #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
                 
 
                 # Build response message
@@ -611,6 +643,9 @@ class FuturesCreateView(APIView):
                 existing_trade.quantity += quantity
                 existing_trade.invested_coin=existing_trade.quantity*existing_trade.avg_price
                 existing_trade.save()
+                beetle_coins.coins+=invested_amount
+                beetle_coins.used_coins-=invested_amount
+                beetle_coins.save()
 
                 # Add to TradeHistory
                 TradeHistory.objects.create(
@@ -620,10 +655,10 @@ class FuturesCreateView(APIView):
                     trade_price=trade_price,
                 )
 
-                try:
-                    beetle_coins.use_coins(invested_amount)
-                except ValidationError as e:
-                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                # try:
+                #     beetle_coins.use_coins(invested_amount)
+                # except ValidationError as e:
+                #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
                 return Response(
                     {
@@ -649,12 +684,15 @@ class FuturesCreateView(APIView):
                         quantity=quantity,
                         trade_price=trade_price,
                     )
+                    beetle_coins.coins-=invested_amount
+                    beetle_coins.used_coins+=invested_amount
+                    beetle_coins.save()
 
                     # Deduct invested coins for the new trade
-                    try:
-                        beetle_coins.use_coins(invested_amount)
-                    except ValidationError as e:
-                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                    # try:
+                    #     beetle_coins.use_coins(invested_amount)
+                    # except ValidationError as e:
+                    #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
                     return Response(
                         {
@@ -688,10 +726,13 @@ class FuturesCreateView(APIView):
                 quantity=quantity,
                 trade_price=trade_price,
             )
-            try:
-                beetle_coins.use_coins(invested_amount)
-            except ValidationError as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            beetle_coins.coins-=invested_amount
+            beetle_coins.used_coins+=invested_amount
+            beetle_coins.save()
+            # try:
+            #     beetle_coins.use_coins(invested_amount)
+            # except ValidationError as e:
+            #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response(
                 {"message": "New trade created.......", "data": serializer.data},
