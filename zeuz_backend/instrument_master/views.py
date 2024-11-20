@@ -234,3 +234,32 @@ class GroupedOptionsView(APIView):
 #     },
 #     status=status.HTTP_200_OK
 # )
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import TradingInstrument
+
+class InstrumentSearchOptions(APIView):
+    def get(self, request, *args, **kwargs):
+        exchange = request.query_params.get('exchange')
+        segment = request.query_params.get('segment')
+
+        if not exchange or not segment:
+            return Response(
+                {"error": "Both 'exchange' and 'segment' query parameters are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Filter instruments based on query params
+        instruments = TradingInstrument.objects.filter(exchange=exchange, segment=segment)
+
+        # Extract unique script names and remove None or blank values
+        unique_script_names = set(
+            instruments.values_list('script_name', flat=True)
+        )
+        unique_script_names = [name for name in unique_script_names if name]
+
+        # Structure the response
+        data = [{"script_name": name} for name in unique_script_names]
+
+        return Response(data, status=status.HTTP_200_OK)

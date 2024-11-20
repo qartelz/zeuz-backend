@@ -75,3 +75,8 @@ class TradingInstrumentSerializer(serializers.ModelSerializer):
 #         }
 
 #         return grouped_data
+
+class TradingInstrumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TradingInstrument
+        fields = ['script_name']
