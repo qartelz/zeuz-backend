@@ -70,7 +70,6 @@ from .models import TradingInstrument
 from django.db.models import Q
 from .serializers import TradingInstrumentSerializer
 from rest_framework.permissions import AllowAny
-
 class TradingInstrumentSearchView(APIView):
     permission_classes = [AllowAny]
 
@@ -78,29 +77,61 @@ class TradingInstrumentSearchView(APIView):
         exchange = request.query_params.get('exchange', None)
         segment = request.query_params.get('segment', None)
         script_name = request.query_params.get('script_name', None)
-        
-        print(exchange, segment, script_name)
 
         if exchange not in ['NSE', 'NFO']:
             return Response({"detail": "Invalid exchange, please use NSE or NFO."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Start building the query
         query = Q(exchange=exchange)
 
-        if exchange == 'NFO' and segment:
-            if segment not in ['FUT', 'OPT']:
-                return Response({"detail": "Invalid segment for NFO, please use FUT or OPT."}, status=status.HTTP_400_BAD_REQUEST)
-            query &= Q(segment=segment)
+        # Additional conditions for NFO
+        if exchange == 'NFO':
+            if segment == 'FUT':
+                instruments = TradingInstrument.objects.filter(exchange='NFO', segment='FUT')
+            elif segment == 'OPT':
+                filters = {'exchange': 'NFO', 'segment': 'OPT'}
+                if script_name:
+                    filters['script_name'] = script_name
+                
+                instruments = TradingInstrument.objects.filter(**filters).values('script_name').distinct()
 
-            # If segment is OPT, filter by script_name as well
-            if segment == 'OPT':
-                if not script_name:
-                    return Response({"detail": "script_name is required for OPT segment."}, status=status.HTTP_400_BAD_REQUEST)
-                query &= Q(script_name=script_name)
 
+
+        # Fetch and serialize the filtered results
         instruments = TradingInstrument.objects.filter(query)
-
         serializer = TradingInstrumentSerializer(instruments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+# class TradingInstrumentSearchView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def get(self, request, *args, **kwargs):
+#         exchange = request.query_params.get('exchange', None)
+#         segment = request.query_params.get('segment', None)
+#         script_name = request.query_params.get('script_name', None)
+        
+#         print(exchange, segment, script_name)
+
+#         if exchange not in ['NSE', 'NFO']:
+#             return Response({"detail": "Invalid exchange, please use NSE or NFO."}, status=status.HTTP_400_BAD_REQUEST)
+
+#         query = Q(exchange=exchange)
+
+#         if exchange == 'NFO' and segment:
+#             if segment not in ['FUT', 'OPT']:
+#                 return Response({"detail": "Invalid segment for NFO, please use FUT or OPT."}, status=status.HTTP_400_BAD_REQUEST)
+#             query &= Q(segment=segment)
+
+#             # If segment is OPT, filter by script_name as well
+#             if segment == 'OPT':
+#                 if not script_name:
+#                     return Response({"detail": "script_name is required for OPT segment."}, status=status.HTTP_400_BAD_REQUEST)
+#                 query &= Q(script_name=script_name)
+
+#         instruments = TradingInstrument.objects.filter(query)
+
+#         serializer = TradingInstrumentSerializer(instruments, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -193,7 +224,7 @@ class GroupedOptionsView(APIView):
             'grouped_data': grouped_data  # Full grouped data
         }
 
-        return Response(data, status=status.HTTP_200_OK)
+        
 
         # Final response structure
 #         return Response(

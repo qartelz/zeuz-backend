@@ -29,5 +29,13 @@ class TradingInstrument(models.Model):
 
     def __str__(self):
         return f"{self.trading_symbol} ({self.exchange})"
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['exchange']),
+            models.Index(fields=['segment']),
+            models.Index(fields=['script_name']),
+            models.Index(fields=['exchange', 'segment']),  # Combined index
+        ]
 
 
