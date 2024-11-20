@@ -798,11 +798,10 @@ class OptionCreateView(APIView):
                     quantity=quantity,
                     trade_price=trade_price,
                 )
-                try:
-                    beetle_coins.use_coins(invested_amount)
-                except ValidationError as e:
-                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+                beetle_coins.coins-=invested_amount
+                beetle_coins.used_coins+=invested_amount
+                beetle_coins.save()
+                
                 return Response(
                     {
                         "message": "Existing incomplete buy trade updated.",
@@ -855,13 +854,12 @@ class OptionCreateView(APIView):
                     # Save the updated trade state
                     existing_trade.save()
                     invested_amount = (existing_trade.avg_price * quantity) + profit_loss
-                    beetle_coins.coins+=profit_loss
+                    beetle_coins.coins+=invested_amount
+                    beetle_coins.used_coins-=invested_amount
+                    beetle_coins.save()
 
                     # Check and deduct Beetle Coins before proceeding
-                    try:
-                        beetle_coins.use_coins(invested_amount)
-                    except ValidationError as e:
-                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                    
                     
 
                     # Build response message
@@ -925,10 +923,9 @@ class OptionCreateView(APIView):
                 invested_amount = (existing_trade.avg_price * quantity) + profit_loss
 
                 # Check and deduct Beetle Coins before proceeding
-                try:
-                    beetle_coins.use_coins(invested_amount)
-                except ValidationError as e:
-                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                beetle_coins.coins+=invested_amount
+                beetle_coins.used_coins-=invested_amount
+                beetle_coins.save()
                 
 
                 # Build response message
@@ -963,10 +960,9 @@ class OptionCreateView(APIView):
                     trade_price=trade_price,
                 )
 
-                try:
-                    beetle_coins.use_coins(invested_amount)
-                except ValidationError as e:
-                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                beetle_coins.coins-=invested_amount
+                beetle_coins.used_coins+=invested_amount
+                beetle_coins.save()
 
                 return Response(
                     {
@@ -994,10 +990,9 @@ class OptionCreateView(APIView):
                     )
 
                     # Deduct invested coins for the new trade
-                    try:
-                        beetle_coins.use_coins(invested_amount)
-                    except ValidationError as e:
-                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                    beetle_coins.coins-=invested_amount
+                    beetle_coins.used_coins+=invested_amount
+                    beetle_coins.save()
 
                     return Response(
                         {
@@ -1031,10 +1026,9 @@ class OptionCreateView(APIView):
                 quantity=quantity,
                 trade_price=trade_price,
             )
-            try:
-                beetle_coins.use_coins(invested_amount)
-            except ValidationError as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            beetle_coins.coins-=invested_amount
+            beetle_coins.used_coins+=invested_amount
+            beetle_coins.save()
 
             return Response(
                 {"message": "New trade created.......", "data": serializer.data},
