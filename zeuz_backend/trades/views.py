@@ -187,7 +187,7 @@ class TradeCreateView(APIView):
                 existing_trade.save()
                 invested_amount = (existing_trade.avg_price * quantity) + profit_loss
                 beetle_coins.coins+=invested_amount
-                beetle_coins.used_coins-=invested_amount
+                beetle_coins.used_coins-=(invested_amount-profit_loss)
                 beetle_coins.save()
 
                 # Check and deduct Beetle Coins before proceeding
@@ -256,7 +256,7 @@ class TradeCreateView(APIView):
                 # Save the updated trade state
                 existing_trade.save()
                 beetle_coins.coins+=invested_amount
-                beetle_coins.used_coins-=invested_amount
+                beetle_coins.used_coins-=(invested_amount-profit_loss)
                 beetle_coins.save()
                 
                 invested_amount = (existing_trade.avg_price * quantity) + profit_loss
@@ -539,7 +539,7 @@ class FuturesCreateView(APIView):
                     # Save the updated trade state
                     existing_trade.save()
                     beetle_coins.coins+=invested_amount
-                    beetle_coins.used_coins-=invested_amount
+                    beetle_coins.used_coins-=(invested_amount-profit_loss)
                     beetle_coins.save()
                     # invested_amount = (existing_trade.avg_price * quantity) + profit_loss
                     
@@ -608,7 +608,7 @@ class FuturesCreateView(APIView):
                 # Save the updated trade state
                 existing_trade.save()
                 beetle_coins.coins+=invested_amount
-                beetle_coins.used_coins-=invested_amount
+                beetle_coins.used_coins-=(invested_amount-profit_loss)
                 beetle_coins.save()
                 
                 # invested_amount = (existing_trade.avg_price * quantity) + profit_loss
@@ -855,7 +855,7 @@ class OptionCreateView(APIView):
                     existing_trade.save()
                     invested_amount = (existing_trade.avg_price * quantity) + profit_loss
                     beetle_coins.coins+=invested_amount
-                    beetle_coins.used_coins-=invested_amount
+                    beetle_coins.used_coins-=(invested_amount-profit_loss)
                     beetle_coins.save()
 
                     # Check and deduct Beetle Coins before proceeding
@@ -924,7 +924,7 @@ class OptionCreateView(APIView):
 
                 # Check and deduct Beetle Coins before proceeding
                 beetle_coins.coins+=invested_amount
-                beetle_coins.used_coins-=invested_amount
+                beetle_coins.used_coins-=(invested_amount-profit_loss)
                 beetle_coins.save()
                 
 
