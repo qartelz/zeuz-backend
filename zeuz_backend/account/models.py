@@ -78,34 +78,34 @@ class BeetleCoins(models.Model):
     def __str__(self):
         return f'{self.user.name} - BeetleCoins'
     
-    def save(self, *args, **kwargs):
-        """Override the save method to automatically update the `coins` field whenever `used_coins` changes."""
-        self.coins = 1000000 - self.used_coins  
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     """Override the save method to automatically update the `coins` field whenever `used_coins` changes."""
+    #     self.coins = 1000000 - self.used_coins  
+    #     super().save(*args, **kwargs)
 
-    def use_coins(self, amount):
-        """Reduces the available coins and increases the used coins."""
-        if amount <= 0:
-            raise ValidationError("Amount to use must be greater than zero.")
+    # def use_coins(self, amount):
+    #     """Reduces the available coins and increases the used coins."""
+    #     if amount <= 0:
+    #         raise ValidationError("Amount to use must be greater than zero.")
         
-        if self.coins < amount:
-            raise ValidationError("Insufficient coins.")
-        
-
-        self.used_coins += amount
-        self.save()
-
-    def return_coins(self, amount):
-        """Return coins back to available coins and decrease used coins."""
-        if amount <= 0:
-            raise ValidationError("Amount to return must be greater than zero.")
-        
-        if self.used_coins < amount:
-            raise ValidationError("Cannot return more coins than have been used.")
+    #     if self.coins < amount:
+    #         raise ValidationError("Insufficient coins.")
         
 
-        self.used_coins -= amount
-        self.save()
+    #     self.used_coins += amount
+    #     self.save()
+
+    # def return_coins(self, amount):
+    #     """Return coins back to available coins and decrease used coins."""
+    #     if amount <= 0:
+    #         raise ValidationError("Amount to return must be greater than zero.")
+        
+    #     if self.used_coins < amount:
+    #         raise ValidationError("Cannot return more coins than have been used.")
+        
+
+    #     self.used_coins -= amount
+    #     self.save()
     
    
 @receiver(post_save, sender=User)

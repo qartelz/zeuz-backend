@@ -271,16 +271,21 @@ class TradeCreateView(APIView):
                 # Save the updated trade state
                 existing_trade.save()
                 beetle_coins.coins+=invested_amount
+                #test this scenario
+                print(beetle_coins.coins)
+            
                 beetle_coins.used_coins-=(invested_amount-profit_loss)
                 beetle_coins.save()
                 
-                invested_amount = (existing_trade.avg_price * quantity) + profit_loss
+                #commented for testing the invested coin not working properly 
+                
+                # invested_amount = (existing_trade.avg_price * quantity) + profit_loss
 
                 # Check and deduct Beetle Coins before proceeding
-                try:
-                    beetle_coins.use_coins(invested_amount)
-                except ValidationError as e:
-                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                # try:
+                #     beetle_coins.use_coins(invested_amount)
+                # except ValidationError as e:
+                #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
                 
 
                 # Build response message
@@ -427,6 +432,7 @@ class TradeCreateView(APIView):
             )
 
             beetle_coins.coins-=invested_amount
+            
             beetle_coins.used_coins+=invested_amount
             beetle_coins.save()
             # try:
@@ -1094,7 +1100,7 @@ class OptionCreateView(APIView):
                         )
                     
                     # Calculate profit/loss for this transaction (Buy + Sell Scenario)
-                    profit_loss = (float(trade_price) - float(existing_trade.avg_price)) * quantity
+                    profit_loss = (float(trade_price) - float(existing_trade.avg_price)) * (existing_trade.quantity - quantity)
                     print(profit_loss)
 
                     # Record the Sell in ClosedTrades
@@ -1375,11 +1381,11 @@ class OptionCreateView(APIView):
 
 
         ###################################################################
-        else:
-            return Response(
-                {"error": "Invalid trade update scenario."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            else:
+                return Response(
+                    {"error": "Invalid trade update scenario."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             
         data["user"] = user.id  # Add user to the data
         serializer = TradesTakenSerializer(data=data)
