@@ -70,38 +70,6 @@ from .models import TradingInstrument
 from django.db.models import Q
 from .serializers import TradingInstrumentSerializer
 from rest_framework.permissions import AllowAny
-class TradingInstrumentSearchView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request, *args, **kwargs):
-        exchange = request.query_params.get('exchange', None)
-        segment = request.query_params.get('segment', None)
-        script_name = request.query_params.get('script_name', None)
-
-        if exchange not in ['NSE', 'NFO']:
-            return Response({"detail": "Invalid exchange, please use NSE or NFO."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Start building the query
-        query = Q(exchange=exchange)
-
-        # Additional conditions for NFO
-        if exchange == 'NFO':
-            if segment == 'FUT':
-                instruments = TradingInstrument.objects.filter(exchange='NFO', segment='FUT')
-            elif segment == 'OPT':
-                filters = {'exchange': 'NFO', 'segment': 'OPT'}
-                if script_name:
-                    filters['script_name'] = script_name
-                
-                instruments = TradingInstrument.objects.filter(**filters).values('script_name').distinct()
-
-
-
-        # Fetch and serialize the filtered results
-        instruments = TradingInstrument.objects.filter(query)
-        serializer = TradingInstrumentSerializer(instruments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
 # class TradingInstrumentSearchView(APIView):
 #     permission_classes = [AllowAny]
 
@@ -109,30 +77,65 @@ class TradingInstrumentSearchView(APIView):
 #         exchange = request.query_params.get('exchange', None)
 #         segment = request.query_params.get('segment', None)
 #         script_name = request.query_params.get('script_name', None)
-        
-#         print(exchange, segment, script_name)
 
 #         if exchange not in ['NSE', 'NFO']:
 #             return Response({"detail": "Invalid exchange, please use NSE or NFO."}, status=status.HTTP_400_BAD_REQUEST)
 
+#         # Start building the query
 #         query = Q(exchange=exchange)
 
-#         if exchange == 'NFO' and segment:
-#             if segment not in ['FUT', 'OPT']:
-#                 return Response({"detail": "Invalid segment for NFO, please use FUT or OPT."}, status=status.HTTP_400_BAD_REQUEST)
-#             query &= Q(segment=segment)
+#         # Additional conditions for NFO
+#         if exchange == 'NFO':
+#             if segment == 'FUT':
+#                 instruments = TradingInstrument.objects.filter(exchange='NFO', segment='FUT')
+#             elif segment == 'OPT':
+#                 filters = {'exchange': 'NFO', 'segment': 'OPT'}
+#                 if script_name:
+#                     filters['script_name'] = script_name
+                
+#                 instruments = TradingInstrument.objects.filter(**filters).values('script_name').distinct()
 
-#             # If segment is OPT, filter by script_name as well
-#             if segment == 'OPT':
-#                 if not script_name:
-#                     return Response({"detail": "script_name is required for OPT segment."}, status=status.HTTP_400_BAD_REQUEST)
-#                 query &= Q(script_name=script_name)
 
+
+#         # Fetch and serialize the filtered results
 #         instruments = TradingInstrument.objects.filter(query)
-
 #         serializer = TradingInstrumentSerializer(instruments, many=True)
 #         return Response(serializer.data, status=status.HTTP_200_OK)
 
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework import status
+# from .models import TradingInstrument
+# from .serializers import TradingInstrumentSerializer
+# from django.db.models import Q
+
+# class TradingInstrumentSearchView(APIView):
+#     """
+#     API to search for stocks based on NSE and NFO exchanges.
+#     """
+#     def get(self, request, *args, **kwargs):
+#         exchange = request.query_params.get('exchange', None)
+        
+#         # Build the query
+#         if exchange:
+#             if exchange not in ['NSE', 'NFO']:
+#                 return Response(
+#                     {"detail": "Invalid exchange. Please use 'NSE' or 'NFO'."},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+#             query = Q(exchange=exchange)
+#         else:
+#             query = Q(exchange__in=['NSE', 'NFO'])  # Default to both exchanges if no filter is provided
+        
+#         # Retrieve the filtered data
+#         instruments = TradingInstrument.objects.filter(query)
+        
+#         # Serialize the data
+#         serializer = TradingInstrumentSerializer(instruments, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    
 
 
 
@@ -233,33 +236,98 @@ class GroupedOptionsView(APIView):
 #         'grouped_data': grouped_data  # Full grouped data
 #     },
 #     status=status.HTTP_200_OK
-# )
+# # )
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework import status
+# from .models import TradingInstrument
+
+# class InstrumentSearchOptions(APIView):
+#     def get(self, request, *args, **kwargs):
+#         exchange = request.query_params.get('exchange')
+#         segment = request.query_params.get('segment')
+
+#         if not exchange or not segment:
+#             return Response(
+#                 {"error": "Both 'exchange' and 'segment' query parameters are required."},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         # Filter instruments based on query params
+#         instruments = TradingInstrument.objects.filter(exchange=exchange, segment=segment)
+
+#         # Extract unique script names and remove None or blank values
+#         unique_script_names = set(
+#             instruments.values_list('script_name', flat=True)
+#         )
+#         unique_script_names = [name for name in unique_script_names if name]
+
+#         # Structure the response
+#         data = [{"script_name": name} for name in unique_script_names]
+
+#         return Response(data, status=status.HTTP_200_OK)
+
+
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import TradingInstrument
+from django.db.models import Q
+from .serializers import TradingInstrumentSerializer
+from rest_framework.permissions import AllowAny
 
-class InstrumentSearchOptions(APIView):
+class TradingInstrumentSearchView(APIView):
+
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
-        exchange = request.query_params.get('exchange')
-        segment = request.query_params.get('segment')
 
-        if not exchange or not segment:
-            return Response(
-                {"error": "Both 'exchange' and 'segment' query parameters are required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        exchange = request.query_params.get('exchange', None)
+        segment = request.query_params.get('segment', None)
+        print(exchange,segment)
+        
+        if exchange not in ['NSE', 'NFO']:
+            
+            return Response({"detail": "Invalid exchange, please use NSE or NFO."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        query = Q(exchange=exchange)
+        
+        
+        if exchange == 'NFO' and segment:
+            if segment not in ['FUT', 'OPT']:
+                return Response({"detail": "Invalid segment for NFO, please use FUT or OPT."}, status=status.HTTP_400_BAD_REQUEST)
+            query &= Q(segment=segment)
+        
+        instruments = TradingInstrument.objects.filter(query)
 
-        # Filter instruments based on query params
-        instruments = TradingInstrument.objects.filter(exchange=exchange, segment=segment)
+        
 
-        # Extract unique script names and remove None or blank values
-        unique_script_names = set(
-            instruments.values_list('script_name', flat=True)
-        )
-        unique_script_names = [name for name in unique_script_names if name]
+        # instrument_data = [
+        #     {
+        #         "token_id": instrument.token_id,
+        #         "exchange": instrument.exchange,
+        #         "trading_symbol": instrument.trading_symbol,
+        #         "series": instrument.series,
+        #         "expiry_date": instrument.expiry_date,
+        #         "option_type": instrument.option_type,
+        #         "segment": instrument.segment,
+        #         "lot_size": instrument.lot_size,
+        #         "tick_size": instrument.tick_size,
+        #         "strike_price": instrument.strike_price,
+        #         "display_name": instrument.display_name,
+        #         "company_name": instrument.company_name,
+        #         "instrument_name": instrument.instrument_name,
+        #         "isin_number": instrument.isin_number
+        #     }
+        #     for instrument in instruments
+        # ]
 
-        # Structure the response
-        data = [{"script_name": name} for name in unique_script_names]
+        # return Response(instrument_data, status=status.HTTP_200_OK)
 
-        return Response(data, status=status.HTTP_200_OK)
+        serializer = TradingInstrumentSerializer(instruments, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+

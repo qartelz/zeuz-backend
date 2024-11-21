@@ -112,3 +112,4 @@ class BeetleCoins(models.Model):
 def create_beetle_coins(sender, instance, created, **kwargs):
     if created:
         BeetleCoins.objects.create(user=instance, used_coins=0) 
+

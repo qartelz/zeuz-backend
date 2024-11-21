@@ -1,5 +1,10 @@
 from django.db import models
 from account.models import User
+
+from django.db import models
+from account.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 # from account.models import BeetleCoins
 
 class TradeOrder(models.Model):
@@ -44,7 +49,7 @@ class TradesTaken(models.Model):
     avg_price = models.FloatField(null=False, blank=True)  # Average price of holdings
     prctype = models.CharField(max_length=10, null=False, blank=True)  # MKT or LMT
     invested_coin = models.FloatField(null=False, blank=True)  # Total investment value
-    profit_loss = models.FloatField(null=True, blank=True,default=0.0)  # Profit/Loss percentage
+    margin_required = models.FloatField(null=True, blank=True,default=0.0)  # Profit/Loss percentage
     trade_status = models.CharField(max_length=100, default="incomplete", null=True) # Status
     ticker = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
@@ -59,6 +64,18 @@ class TradesTaken(models.Model):
             self.trade_status = "completed"
         super().save(*args, **kwargs)
 
+class MarginLocked(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    margin = models.FloatField(null=True, blank=True,default=0.0)
+
+    def __str__(self):
+        return f"{self.user} - {self.margin}"
+    
+    # Signal to create MarginLocked instance
+@receiver(post_save, sender=User)
+def create_margin_locked(sender, instance, created, **kwargs):
+    if created:  # Only create when a new User is created
+        MarginLocked.objects.create(user=instance)
 
 class ClosedTrades(models.Model):
     trade = models.ForeignKey(TradesTaken, on_delete=models.CASCADE, related_name="closed_trades")
