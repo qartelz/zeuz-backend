@@ -73,8 +73,8 @@ class Profile(models.Model):
     
 class BeetleCoins(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    coins = models.PositiveIntegerField(default=1000000)
-    used_coins = models.PositiveIntegerField(default=0) 
+    coins = models.DecimalField(max_digits=10, decimal_places=2, default=1000000.00)
+    used_coins = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     def __str__(self):
         return f'{self.user.name} - BeetleCoins'
     
