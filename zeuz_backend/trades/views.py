@@ -125,7 +125,7 @@ class TradeCreateView(APIView):
                 print("here")
                 # Update the existing trade (Buy + Buy)
                 existing_trade.avg_price = (
-                    (existing_trade.avg_price * existing_trade.quantity + trade_price * quantity)
+                    (existing_trade.avg_price * existing_trade.quantity + float(trade_price) * quantity)
                     / (existing_trade.quantity + quantity)
                 )
                 existing_trade.quantity += quantity
