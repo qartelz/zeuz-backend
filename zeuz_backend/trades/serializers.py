@@ -41,37 +41,37 @@ class ClosedTradesSerializer(serializers.ModelSerializer):
         model = ClosedTrades
         fields = "__all__"
 
-    def create(self, validated_data):
-        """
-        Override create method to adjust quantity and user BeetleCoins.
-        """
-        closed_trade = super().create(validated_data)
-        trade = closed_trade.trade
-        user = trade.user
+    # def create(self, validated_data):
+    #     """
+    #     Override create method to adjust quantity and user BeetleCoins.
+    #     """
+    #     closed_trade = super().create(validated_data)
+    #     trade = closed_trade.trade
+    #     user = trade.user
 
-        # Update the trade's quantity
-        trade.quantity -= closed_trade.sell_quantity
-        if trade.quantity <= 0:
-            trade.quantity = 0
-            trade.invested_coin = 0
-        else:
-            trade.invested_coin = trade.quantity * trade.avg_price
-        trade.save()
+    #     # Update the trade's quantity
+    #     trade.quantity -= closed_trade.sell_quantity
+    #     if trade.quantity <= 0:
+    #         trade.quantity = 0
+    #         trade.invested_coin = 0
+    #     else:
+    #         trade.invested_coin = trade.quantity * trade.avg_price
+    #     trade.save()
 
-        # Update the user's BeetleCoins
-        if hasattr(user, 'beetle_coins'):
-            user.beetle_coins += closed_trade.profit_loss
-            user.save()
+    #     # Update the user's BeetleCoins
+    #     if hasattr(user, 'beetle_coins'):
+    #         user.beetle_coins += closed_trade.profit_loss
+    #         user.save()
 
-        # Log the transaction in TradeHistory
-        TradeHistory.objects.create(
-            trade=trade,
-            trade_type="sell",
-            quantity=closed_trade.sell_quantity,
-            trade_price=closed_trade.sell_price,
-        )
+    #     # Log the transaction in TradeHistory
+    #     TradeHistory.objects.create(
+    #         trade=trade,
+    #         trade_type="sell",
+    #         quantity=closed_trade.sell_quantity,
+    #         trade_price=closed_trade.sell_price,
+    #     )
 
-        return closed_trade
+    #     return closed_trade
 
 
 class TradeHistorySerializer(serializers.ModelSerializer):
