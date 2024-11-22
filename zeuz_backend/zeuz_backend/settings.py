@@ -25,7 +25,11 @@ SECRET_KEY = 'django-insecure-wt)0%%zsl-nk8l$^k@0#8gh56^9^jpa&7ubw$#-w8+m)(cxy)z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'backend.beetlezeuz.in',
+    'localhost',
+    '127.0.0.1',
+]
 
 
 
