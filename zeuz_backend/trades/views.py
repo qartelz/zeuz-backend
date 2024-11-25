@@ -138,8 +138,12 @@ class TradeCreateView(APIView):
                 existing_trade.invested_coin+=invested_amount
                 
                 existing_trade.save()
-                beetle_coins.coins-=invested_amount
-                beetle_coins.used_coins+=invested_amount
+                # beetle_coins.coins-=invested_amount
+                # beetle_coins.used_coins+=invested_amount
+                # beetle_coins.save()
+
+                beetle_coins.coins -= Decimal(invested_amount)
+                beetle_coins.used_coins += Decimal(invested_amount)
                 beetle_coins.save()
 
                 # Add to TradeHistory
@@ -276,7 +280,8 @@ class TradeCreateView(APIView):
 
                 # Save the updated trade state
                 existing_trade.save()
-                beetle_coins.coins+=invested_amount
+                beetle_coins.coins += Decimal(invested_amount)
+                # beetle_coins.coins+=invested_amount
                 #test this scenario
                 print(beetle_coins.coins)
             
@@ -362,9 +367,13 @@ class TradeCreateView(APIView):
                         trade_price=trade_price,
                     )
 
-                    beetle_coins.coins-=invested_amount
-                    beetle_coins.used_coins+=invested_amount
+                    beetle_coins.coins -= Decimal(invested_amount)
+                    beetle_coins.used_coins += Decimal(invested_amount)
                     beetle_coins.save()
+
+                    # beetle_coins.coins-=invested_amount
+                    # beetle_coins.used_coins+=invested_amount
+                    # beetle_coins.save()
 
                     # Deduct invested coins for the new trade
                     # try:
@@ -421,7 +430,7 @@ class TradeCreateView(APIView):
                 )
 
         # If no existing trade, create a new one
-        data["user"] = user.id  # Add user to the data
+        # data["user"] = user.id  # Add user to the data
         serializer = TradesTakenSerializer(data=data)
 
         if serializer.is_valid():
@@ -437,10 +446,14 @@ class TradeCreateView(APIView):
                 trade_price=trade_price,
             )
 
-            beetle_coins.coins-=invested_amount
-            
-            beetle_coins.used_coins+=invested_amount
+            beetle_coins.coins -= Decimal(invested_amount)
+            beetle_coins.used_coins += Decimal(invested_amount)
             beetle_coins.save()
+
+            # beetle_coins.coins-=invested_amount
+            
+            # beetle_coins.used_coins+=invested_amount
+            # beetle_coins.save()
             # try:
             #     beetle_coins.use_coins(invested_amount)
             # except ValidationError as e:
@@ -493,7 +506,7 @@ class FuturesCreateView(APIView):
             print(margin)
 
             
-        except BeetleCoins.DoesNotExist:
+        except MarginLocked.DoesNotExist:
             return Response({"error": "User's Beetle Coins record not found."}, status=status.HTTP_404_NOT_FOUND)
         
         print(margin_required + margin.margin,beetle_coins.coins,beetle_coins.coins,invested_amount)
