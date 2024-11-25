@@ -71,7 +71,6 @@ class TradeCreateView(APIView):
     def post(self, request):
         user = request.user
         data = request.data
-
         # Extract data from request
         ticker = data.get("ticker")
         trade_type = data.get("trade_type")
@@ -118,6 +117,12 @@ class TradeCreateView(APIView):
                 {"error": "You don't have enough coins to execute the trade."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        # if (margin_required + margin.margin > beetle_coins.coins) or (beetle_coins.coins <= invested_amount):
+        #     print(f"Margin required: {margin_required}, Margin: {margin.margin}, Coins: {beetle_coins.coins}, Invested amount: {invested_amount}")
+        #     return Response(
+        #         {"error": "You don't have enough coins to execute the trade."},
+        #         status=status.HTTP_404_NOT_FOUND,
+        #     )
         if existing_trade:
             print("Already")
             # Handle different conditions based on `trade_type` and `trade_status`
@@ -1134,8 +1139,14 @@ class FuturesCreateView(APIView):
                 quantity=quantity,
                 trade_price=trade_price,
             )
-            beetle_coins.coins-=invested_amount
-            beetle_coins.used_coins+=invested_amount
+            # beetle_coins.coins-=invested_amount
+            # beetle_coins.used_coins+=invested_amount
+            # beetle_coins.save()
+
+            invested_amount_decimal = Decimal(invested_amount)
+
+            beetle_coins.coins -= invested_amount_decimal
+            beetle_coins.used_coins += invested_amount_decimal
             beetle_coins.save()
 
             margin.margin+=margin_required
