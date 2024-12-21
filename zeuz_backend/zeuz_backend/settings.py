@@ -29,6 +29,7 @@ ALLOWED_HOSTS = [
     'backend.beetlezeuz.in',
     'localhost',
     '127.0.0.1',
+    '16.171.110.95',
 ]
 
 

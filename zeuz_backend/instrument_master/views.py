@@ -301,27 +301,6 @@ class TradingInstrumentSearchView(APIView):
         
         instruments = TradingInstrument.objects.filter(query)
 
-        
-
-        # instrument_data = [
-        #     {
-        #         "token_id": instrument.token_id,
-        #         "exchange": instrument.exchange,
-        #         "trading_symbol": instrument.trading_symbol,
-        #         "series": instrument.series,
-        #         "expiry_date": instrument.expiry_date,
-        #         "option_type": instrument.option_type,
-        #         "segment": instrument.segment,
-        #         "lot_size": instrument.lot_size,
-        #         "tick_size": instrument.tick_size,
-        #         "strike_price": instrument.strike_price,
-        #         "display_name": instrument.display_name,
-        #         "company_name": instrument.company_name,
-        #         "instrument_name": instrument.instrument_name,
-        #         "isin_number": instrument.isin_number
-        #     }
-        #     for instrument in instruments
-        # ]
 
         # return Response(instrument_data, status=status.HTTP_200_OK)
 

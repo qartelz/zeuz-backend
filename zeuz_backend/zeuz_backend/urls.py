@@ -23,5 +23,4 @@ urlpatterns = [
     path('instrument/', include('instrument_master.urls')),
     path('trades/', include('trades.urls')),
 
-
 ]
