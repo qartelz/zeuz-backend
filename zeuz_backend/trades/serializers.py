@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TradeOrder
+from .models import TradeOrder,LimitOrder
 
 class TradeOrderSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)  # User is read-only and will be set via the context
@@ -36,10 +36,21 @@ class TradesTakenSerializer(serializers.ModelSerializer):
     #     return super().is_valid(raise_exception=raise_exception)
 
 
+# class ClosedTradesSerializer(serializers.ModelSerializer):
+#     display_name = serializers.CharField(source='trade.display_name', read_only=True)
+
+#     class Meta:
+#         model = ClosedTrades
+#         fields = "__all__"
+
 class ClosedTradesSerializer(serializers.ModelSerializer):
+    display_name = serializers.CharField(source='trade.display_name', read_only=True)
+    # product_type = serializers.CharField(source='trade.product_type', read_only=True)
+
     class Meta:
         model = ClosedTrades
-        fields = "__all__"
+        fields = "__all__"  # Include all fields from ClosedTrades
+        extra_fields = ['display_name', 'product_type']
 
     # def create(self, validated_data):
     #     """
@@ -78,3 +89,25 @@ class TradeHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = TradeHistory
         fields = "__all__"
+
+
+class LimitOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LimitOrder
+        fields = [
+            'user', 'token_id', 'exchange', 'trading_symbol', 'series', 'lot_size',
+            'quantity', 'display_name', 'company_name', 'expiry_date', 'product_type',
+            'segment', 'option_type', 'trade_type', 'avg_price', 'prctype', 'invested_coin',
+            'executed', 'trade_status', 'ticker', 'created_at', 'updated_at'
+        ]
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import LimitOrder
+
+class LimitOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LimitOrder
+        fields = "__all__"
+

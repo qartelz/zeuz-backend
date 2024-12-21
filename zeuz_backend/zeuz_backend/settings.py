@@ -37,11 +37,13 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'corsheaders',
     'rest_framework',
     'account',
     'adminlogin',
     'trades',
+    'django_celery_beat',
     'instrument_master',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -51,6 +53,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
 ]
+
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -105,7 +109,25 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'zeuz_backend.wsgi.application'
+ASGI_APPLICATION = 'zeuz_backend.asgi.application'
 
+# Add channel layer backend (for WebSocket communication)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Install Redis for the broker
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# Celery configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis as broker (make sure Redis is running)
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Redis as result backend
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Kolkata'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -180,3 +202,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
