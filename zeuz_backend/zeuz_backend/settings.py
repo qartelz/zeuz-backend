@@ -68,6 +68,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
 ]
+CSRF_TRUSTED_ORIGINS = [
+    'https://backend.beetlezeuz.in',
+    'https://www.backend.beetlezeuz.in',  # Add other subdomains if necessary
+]
 
 ROOT_URLCONF = 'zeuz_backend.urls'
 
