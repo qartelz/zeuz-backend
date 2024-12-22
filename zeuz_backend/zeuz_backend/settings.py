@@ -163,9 +163,9 @@ CELERY_TIMEZONE = 'Asia/Kolkata'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'zeuzz',  
-        'USER': 'postgres',  
-        'PASSWORD': 'sidharth',  
+        'NAME': 'zeuz',  
+        'USER': 'qartelz',  
+        'PASSWORD': 'qartelz@123',  
         'HOST': 'localhost',  
         'PORT': '5432',  
     }
