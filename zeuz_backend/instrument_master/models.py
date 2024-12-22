@@ -2,10 +2,10 @@ from django.db import models
 
 class UploadedFile(models.Model):
     file_name = models.CharField(max_length=255)
-    file = models.FileField(upload_to='uploads/',default=None)
+    # file = models.FileField(upload_to='uploads/',default=None)
     upload_time = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=50, default='uploaded')  # uploaded, processing, processed, error
-    error_message = models.TextField(blank=True, null=True)
+    # error_message = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.file_name
