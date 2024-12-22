@@ -38,7 +38,9 @@ class CSVUploadView(APIView):
                         series=row[3].strip() if row[3] else None,
                         script_name=row[4].strip() if row[4] else None,
                         ticker=row[5].strip() if row[5] else None,
-                        expiry_date=datetime.strptime(row[6].strip(), "%d-%b-%Y").date() if row[6].strip() else None,
+                        # expiry_date=datetime.strptime(row[6].strip(), "%d-%b-%Y").date() if row[6].strip() else None,
+                        expiry_date=datetime.strptime(row[6].strip(), "%d-%b-%y").date() if row[6].strip() else None,
+
                         option_type=row[7].strip() if row[7] else None,
                         segment=row[8].strip(),
                         lot_size=int(float(row[9].strip())) if row[9].strip() else 0,
