@@ -66,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'zeuz_backend.urls'
@@ -75,12 +76,28 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  
     #  "*",
 ]
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'x-csrftoken',
+    'authorization',
+]
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+    'OPTIONS',
+]
 
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+
     ],
+    #  'DEFAULT_AUTHENTICATION_CLASSES': [
+    #     'rest_framework.authentication.TokenAuthentication',
+    # ],
     # 'DEFAULT_PERMISSION_CLASSES': [
     #     'rest_framework.permissions.IsAuthenticated',
     # ],
@@ -142,9 +159,9 @@ CELERY_TIMEZONE = 'Asia/Kolkata'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'zeuz',  
-        'USER': 'qartelz',  
-        'PASSWORD': 'qartelz@123',  
+        'NAME': 'zeuzz',  
+        'USER': 'postgres',  
+        'PASSWORD': 'sidharth',  
         'HOST': 'localhost',  
         'PORT': '5432',  
     }
