@@ -52,15 +52,32 @@ from django.dispatch import receiver
 from .models import LimitOrder
 from .websocket_enrich import trigger_multiple_websockets
 from adminlogin.models import Tokens
+import certifi
 
+# def get_ssl_context(verify_ssl=True):
+#     """
+#     Create an SSL context.
+#     In production, `verify_ssl` should always be True to enforce SSL certificate validation.
+#     """
+#     ssl_context = ssl.create_default_context()
+
+#     if not verify_ssl:
+#         # Disabling SSL validation is risky, only use for non-production or testing.
+#         ssl_context.check_hostname = False
+#         ssl_context.verify_mode = ssl.CERT_NONE
+
+#     return ssl_context
+
+# def get_ssl_context():
+#     """Create an SSL context using certifi's trusted CA certificates."""
+#     ssl_context = ssl.create_default_context(cafile=certifi.where())
+#     return ssl_context
 
 def get_ssl_context():
-    """Create an SSL context with SSL verification disabled."""
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
+    """Create an SSL context using certifi's trusted CA certificates."""
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    ssl_context.verify_mode = ssl.CERT_REQUIRED  # Enforce verification
     return ssl_context
-
 
 @receiver(post_save, sender=LimitOrder)
 def limit_order_created(sender, instance, created, **kwargs):
@@ -92,6 +109,7 @@ def limit_order_created(sender, instance, created, **kwargs):
             "exchange": instance.exchange,
             "avg_price": instance.avg_price,
             "instance_id": instance.id,
+            "trade_type": instance.trade_type,
         }]
 
         # Get the SSL context

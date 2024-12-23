@@ -26,10 +26,10 @@ def is_within_trading_hours():
     """
     current_time = datetime.now().time()
     start_time = time(9, 15)  # 9:15 AM
-    end_time = time(15, 30)   # 3:15 PM
+    end_time = time(21, 00)   # 3:30 PM
     return start_time <= current_time <= end_time
 
-async def connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_price, instance_id,ssl_context,):
+async def connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_price, instance_id,ssl_context,trade_type):
     """
     Function to establish a WebSocket connection and monitor price updates,
     while sending heartbeats to keep the connection alive.
@@ -86,7 +86,8 @@ async def connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_
                         current_price = float(data["lp"])
                         logger.info(f"Current Price for {token_id}: {current_price}")
 
-                        if current_price == avg_price:
+                        if (current_price <= avg_price and trade_type == "Buy") or (current_price >= avg_price and trade_type == "Sell"):
+
 
                             # Close WebSocket and update order as executed
                             await websocket.close()
@@ -144,10 +145,11 @@ async def manage_websockets(uri, auth_payload, token_data):
         exchange = data['exchange']
         avg_price = data['avg_price']
         instance_id = data['instance_id']
+        trade_type = data['trade_type']
 
         # Create a task for each WebSocket connection
         task = asyncio.create_task(
-            connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_price, instance_id)
+            connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_price, instance_id, trade_type)
         )
         tasks.append(task)
 
@@ -172,6 +174,7 @@ def trigger_multiple_websockets(uri, auth_payload, token_data,ssl_context):
                 exchange=token["exchange"],
                 avg_price=token["avg_price"],
                 instance_id=token["instance_id"],
+                trade_type=token["trade_type"],
                 ssl_context=ssl_context,
             )
             tasks.append(task)
