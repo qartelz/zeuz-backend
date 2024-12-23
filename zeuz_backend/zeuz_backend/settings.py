@@ -160,16 +160,27 @@ CELERY_TIMEZONE = 'Asia/Kolkata'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'zeuz',  
+#         'USER': 'qartelz',  
+#         'PASSWORD': 'qartelz@123',  
+#         'HOST': 'localhost',  
+#         'PORT': '5432',  
+#     }
+# }
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'zeuz',  
-        'USER': 'qartelz',  
-        'PASSWORD': 'qartelz@123',  
+        'NAME': 'zeuzz',  
+        'USER': 'postgres',  
+        'PASSWORD': 'sidharth',  
         'HOST': 'localhost',  
         'PORT': '5432',  
     }
 }
+
 
 CACHES = {
     'default': {

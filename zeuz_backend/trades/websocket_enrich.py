@@ -26,10 +26,10 @@ def is_within_trading_hours():
     """
     current_time = datetime.now().time()
     start_time = time(9, 15)  # 9:15 AM
-    end_time = time(15, 15)   # 3:15 PM
+    end_time = time(15, 30)   # 3:15 PM
     return start_time <= current_time <= end_time
 
-async def connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_price, instance_id):
+async def connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_price, instance_id,ssl_context,):
     """
     Function to establish a WebSocket connection and monitor price updates,
     while sending heartbeats to keep the connection alive.
@@ -37,7 +37,7 @@ async def connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_
     print(f"Connecting to WebSocket for Instance ID: {instance_id}, Token ID: {token_id}")
     try:
         # Open WebSocket connection
-        async with websockets.connect(uri) as websocket:
+        async with websockets.connect(uri,ssl=ssl_context) as websocket:
             # Authenticate
             await websocket.send(json.dumps(auth_payload))
             logger.info("Authentication sent: %s", auth_payload)
@@ -155,7 +155,7 @@ async def manage_websockets(uri, auth_payload, token_data):
     await asyncio.gather(*tasks)
 
 
-def trigger_multiple_websockets(uri, auth_payload, token_data):
+def trigger_multiple_websockets(uri, auth_payload, token_data,ssl_context):
     """
     Runs WebSocket logic for multiple tokens in parallel.
     :param uri: WebSocket URI
@@ -164,7 +164,7 @@ def trigger_multiple_websockets(uri, auth_payload, token_data):
     """
     async def manage_websockets():
         tasks = []
-        for token in token_data:
+        for token in token_data:    
             task = connect_and_send_websocket(
                 uri=uri,
                 auth_payload=auth_payload,
@@ -172,6 +172,7 @@ def trigger_multiple_websockets(uri, auth_payload, token_data):
                 exchange=token["exchange"],
                 avg_price=token["avg_price"],
                 instance_id=token["instance_id"],
+                ssl_context=ssl_context,
             )
             tasks.append(task)
         await asyncio.gather(*tasks)

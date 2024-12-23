@@ -176,6 +176,7 @@ class LimitOrder(models.Model):
     trade_status = models.CharField(
         max_length=100, default="incomplete", null=True
     )  # Status
+    status = models.CharField(max_length=255, default="NOT EXECUTED", null=True)
     ticker = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now_add=True, null=True)
