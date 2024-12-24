@@ -9,7 +9,7 @@ from .views import process_trade,process_futures
 from asgiref.sync import sync_to_async
 
 from datetime import datetime,time
-
+import ssl
 # Logger setup
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -34,6 +34,7 @@ async def connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_
     Function to establish a WebSocket connection and monitor price updates,
     while sending heartbeats to keep the connection alive.
     """
+    
     print(f"Connecting to WebSocket for Instance ID: {instance_id}, Token ID: {token_id}")
     try:
         # Open WebSocket connection
@@ -132,7 +133,7 @@ async def connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_
     except Exception as e:
         logger.error(f"Failed to connect WebSocket for Instance ID {instance_id}: {e}")
 
-async def manage_websockets(uri, auth_payload, token_data):
+async def manage_websockets(uri, auth_payload, token_data,ssl_context):
     """
     Manage multiple WebSocket connections concurrently for different token IDs.
     :param uri: WebSocket URI
@@ -146,10 +147,11 @@ async def manage_websockets(uri, auth_payload, token_data):
         avg_price = data['avg_price']
         instance_id = data['instance_id']
         trade_type = data['trade_type']
+        ssl_context = data['ssl_context']
 
         # Create a task for each WebSocket connection
         task = asyncio.create_task(
-            connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_price, instance_id, trade_type)
+            connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_price, instance_id, trade_type,ssl_context)
         )
         tasks.append(task)
 

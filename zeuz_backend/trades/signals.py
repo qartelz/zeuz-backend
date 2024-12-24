@@ -73,10 +73,22 @@ import certifi
 #     ssl_context = ssl.create_default_context(cafile=certifi.where())
 #     return ssl_context
 
-def get_ssl_context():
-    """Create an SSL context using certifi's trusted CA certificates."""
-    ssl_context = ssl.create_default_context(cafile=certifi.where())
-    ssl_context.verify_mode = ssl.CERT_REQUIRED  # Enforce verification
+# def get_ssl_context():
+#     """Create an SSL context using certifi's trusted CA certificates."""
+#     ssl_context = ssl.create_default_context(cafile=certifi.where())
+#     ssl_context.verify_mode = ssl.CERT_REQUIRED  # Enforce verification
+#     return ssl_context
+
+def get_ssl_context(verify_ssl=False):
+    """
+    Create an SSL context with an option to disable SSL verification.
+    """
+    ssl_context = ssl.create_default_context()
+
+    if not verify_ssl:
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE  # Disable certificate verification
+
     return ssl_context
 
 @receiver(post_save, sender=LimitOrder)
@@ -113,7 +125,9 @@ def limit_order_created(sender, instance, created, **kwargs):
         }]
 
         # Get the SSL context
-        ssl_context = get_ssl_context()
+        ssl_context = get_ssl_context(verify_ssl=False)
+        # ssl_context = ssl.create_default_context(cafile=certifi.where())
+    # return ssl_context
 
         # Start WebSocket connections in a separate thread
         thread = threading.Thread(
