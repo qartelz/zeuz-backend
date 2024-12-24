@@ -1132,7 +1132,7 @@ class FuturesCreateView(APIView):
                         # beetle_coins.coins += Decimal(existing_trade.invested_coin)+  Decimal(
                         #     profit_loss
                         # )
-                        beetle_coins.coins+=Decimal(invested_amount)
+                        beetle_coins.coins+= (Decimal(existing_trade.invested_coin)+Decimal(profit_loss))
                         beetle_coins.used_coins -= Decimal(existing_trade.invested_coin)
                         beetle_coins.save()
 
