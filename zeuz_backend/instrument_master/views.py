@@ -39,7 +39,13 @@ class CSVUploadView(APIView):
                         script_name=row[4].strip() if row[4] else None,
                         ticker=row[5].strip() if row[5] else None,
                         # expiry_date=datetime.strptime(row[6].strip(), "%d-%b-%Y").date() if row[6].strip() else None,
-                        expiry_date=datetime.strptime(row[6].strip(), "%d-%b-%y").date() if row[6].strip() else None,
+                        # expiry_date=datetime.strptime(row[6].strip(), "%d-%b-%y").date() if row[6].strip() else None,
+                        expiry_date=(
+                            datetime.strptime(row[6].strip(), "%d-%b-%y").date()
+                            if len(row[6].strip().split("-")[-1]) == 2 else
+                            datetime.strptime(row[6].strip(), "%d-%b-%Y").date()
+                            if row[6].strip() else None
+                        ),
 
                         option_type=row[7].strip() if row[7] else None,
                         segment=row[8].strip(),
@@ -312,3 +318,55 @@ class TradingInstrumentSearchView(APIView):
 
 
 
+
+
+class SearchView(APIView):
+    permission_classes = [AllowAny]
+
+    def validate_exchange(self, exchange):
+        """
+        Validates the exchange parameter.
+        """
+        if exchange not in ['NSE', 'NFO']:
+            return Response(
+                {"detail": "Invalid exchange, please use NSE or NFO."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
+
+    def get_nfo_segment_query(self, segment):
+        """
+        Validates and constructs a query for NFO segments.
+        """
+        if segment not in ['FUT', 'OPT']:
+            return None, Response(
+                {"detail": "Invalid segment for NFO, please use FUT or OPT."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Q(segment=segment), None
+
+    def get(self, request, *args, **kwargs):
+        exchange = request.query_params.get('exchange', None)
+        segment = request.query_params.get('segment', None)
+
+        # Validate exchange
+        exchange_error = self.validate_exchange(exchange)
+        if exchange_error:
+            return exchange_error
+
+        # Build query
+        query = Q(exchange=exchange)
+
+        if exchange == 'NFO' and segment:
+            segment_query, error_response = self.get_nfo_segment_query(segment)
+            if error_response:
+                return error_response
+            query &= segment_query
+
+        # Fetch instruments
+        instruments = TradingInstrument.objects.filter(query)
+
+        # Serialize data
+        serializer = TradingInstrumentSerializer(instruments, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
