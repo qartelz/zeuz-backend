@@ -76,3 +76,19 @@ class ScriptGroupedDataSerializer(serializers.Serializer):
 
         return grouped_data
 
+
+
+# test for search serializer
+
+from rest_framework import serializers
+from .models import TradingInstrument
+
+class TradingInstrumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TradingInstrument
+        fields = [
+            'id', 'token_id', 'exchange', 'trading_symbol', 'script_name',
+            'ticker', 'expiry_date', 'option_type', 'segment', 'lot_size',
+            'tick_size', 'strike_price', 'display_name', 'company_name',
+            'instrument_name', 'isin_number'
+        ]

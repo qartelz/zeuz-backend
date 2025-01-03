@@ -154,7 +154,7 @@ class LimitOrder(models.Model):
     exchange = models.CharField(max_length=50, null=False, blank=True)
     trading_symbol = models.CharField(max_length=50, null=False, blank=True)
     series = models.CharField(max_length=10, null=False, blank=True)  # EQ
-    lot_size = models.IntegerField(null=False, blank=True)  # Default value from DB
+    lot_size = models.IntegerField(null=False, blank=True)  
     quantity = models.IntegerField(null=False, blank=True)  # Total quantity held
     display_name = models.CharField(max_length=100, null=False, blank=True)
     company_name = models.CharField(max_length=100, null=False, blank=True)

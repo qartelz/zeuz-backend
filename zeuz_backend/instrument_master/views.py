@@ -370,3 +370,37 @@ class SearchView(APIView):
         serializer = TradingInstrumentSerializer(instruments, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
+from .models import TradingInstrument
+from .serializers import TradingInstrumentSerializer
+
+class TradingInstrumentPagination(PageNumberPagination):
+    page_size = 10  # Number of items per page
+
+class TradingInstrumentSearchViews(APIView):
+    pagination_class = TradingInstrumentPagination
+
+    def get(self, request):
+        query = request.GET.get('q', '')  # Search query
+        page = request.GET.get('page', 1)  # Pagination
+        instruments = TradingInstrument.objects.all()
+
+        if query:
+            instruments = instruments.filter(
+                Q(trading_symbol__icontains=query) |
+                Q(script_name__icontains=query) |
+                Q(exchange__icontains=query) |
+                Q(company_name__icontains=query)
+            )
+
+        # Paginate results
+        paginator = TradingInstrumentPagination()
+        paginated_instruments = paginator.paginate_queryset(instruments, request)
+        serializer = TradingInstrumentSerializer(paginated_instruments, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
