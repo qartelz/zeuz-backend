@@ -404,3 +404,38 @@ class TradingInstrumentSearchViews(APIView):
         serializer = TradingInstrumentSerializer(paginated_instruments, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
+
+# from django.db.models import Q
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework import status
+
+# from .models import TradingInstrument
+# from .serializers import TradingInstrumentSerializer
+
+# class FilterOptionsView(APIView):
+#     """
+#     API to filter options data based on stock name and expiry date.
+#     """
+#     def get(self, request, *args, **kwargs):
+#         # Get parameters
+#         script_name = request.query_params.get('script_name', None)
+#         expiry_date = request.query_params.get('expiry_date', None)
+
+#         # Validate parameters
+#         if not script_name or not expiry_date:
+#             return Response(
+#                 {"detail": "Both 'script_name' and 'expiry_date' are required."},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+
+#         # Filter data
+#         instruments = TradingInstrument.objects.filter(
+#             Q(script_name=script_name) & Q(expiry_date=expiry_date)
+#         )
+
+#         # Serialize results
+#         serializer = TradingInstrumentSerializer(instruments, many=True)
+
+#         return Response(serializer.data, status=status.HTTP_200_OK)
