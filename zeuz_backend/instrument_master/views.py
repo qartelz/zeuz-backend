@@ -380,7 +380,8 @@ from .models import TradingInstrument
 from .serializers import TradingInstrumentSerializer
 
 class TradingInstrumentPagination(PageNumberPagination):
-    page_size = 10  # Number of items per page
+    page_size = 100  # Number of items per page
+
 
 class TradingInstrumentSearchViews(APIView):
     pagination_class = TradingInstrumentPagination
@@ -388,7 +389,16 @@ class TradingInstrumentSearchViews(APIView):
     def get(self, request):
         query = request.GET.get('q', '')  # Search query
         page = request.GET.get('page', 1)  # Pagination
+        exchange = request.GET.get('exchange', '')  # Exchange filter
+        segment = request.GET.get('segment', '')  # Segment filter (optional)
+
+        # Filter instruments
         instruments = TradingInstrument.objects.all()
+
+        if exchange:
+            instruments = instruments.filter(exchange__iexact=exchange)
+        if segment:
+            instruments = instruments.filter(segment__iexact=segment)
 
         if query:
             instruments = instruments.filter(
@@ -404,6 +414,34 @@ class TradingInstrumentSearchViews(APIView):
         serializer = TradingInstrumentSerializer(paginated_instruments, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
+
+# class TradingInstrumentPagination(PageNumberPagination):
+#     page_size = 10  # Number of items per page
+
+# class TradingInstrumentSearchViews(APIView):
+#     pagination_class = TradingInstrumentPagination
+
+#     def get(self, request):
+#         query = request.GET.get('q', '')  # Search query
+#         page = request.GET.get('page', 1)  # Pagination
+        
+#         instruments = TradingInstrument.objects.all()
+
+#         if query:
+#             instruments = instruments.filter(
+#                 Q(trading_symbol__icontains=query) |
+#                 Q(script_name__icontains=query) |
+#                 Q(exchange__icontains=query) |
+#                 Q(company_name__icontains=query)
+#             )
+
+#         # Paginate results
+#         paginator = TradingInstrumentPagination()
+#         paginated_instruments = paginator.paginate_queryset(instruments, request)
+#         serializer = TradingInstrumentSerializer(paginated_instruments, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
 
 
 # from django.db.models import Q

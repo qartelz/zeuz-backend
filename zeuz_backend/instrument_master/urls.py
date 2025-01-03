@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CSVUploadView,TradingInstrumentSearchView,GroupedOptionsView,SearchView,TradingInstrumentSearchViews,FilterOptionsView
+from .views import CSVUploadView,TradingInstrumentSearchView,GroupedOptionsView,SearchView,TradingInstrumentSearchViews
 
 urlpatterns = [
    
@@ -13,5 +13,5 @@ urlpatterns = [
      path('searchh/', TradingInstrumentSearchViews.as_view(), name='trading_instrument_search'),
 
 
-    path('options-chain/', FilterOptionsView.as_view(), name='filter-options'),
+#     path('options-chain/', FilterOptionsView.as_view(), name='filter-options'),
 ]
