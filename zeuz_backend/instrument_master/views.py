@@ -221,6 +221,7 @@ from rest_framework.response import Response
 from .models import TradingInstrument
 from collections import defaultdict
 from datetime import date
+from collections import defaultdict
 
 class GroupedOptionsView(APIView):
     def get(self, request, *args, **kwargs):
@@ -233,42 +234,41 @@ class GroupedOptionsView(APIView):
         include_all = request.query_params.get('include_all', 'false').lower() == 'true'
         grouped_data = self.get_grouped_data(script_name, expiry_date, include_all)
         return Response(grouped_data)
+    
+
 
     def get_grouped_data(self, script_name, expiry_date, include_all):
         options = TradingInstrument.objects.filter(script_name=script_name, segment='OPT').values()
 
-        # Group data by expiry date
+        # Group options by expiry date and strike price
         grouped_by_expiry = defaultdict(lambda: {'expiry_date': None, 'options': []})
-        unique_expiry_dates = set()  # Collect all unique expiry dates
+        unique_expiry_dates = set()
 
         for option in options:
             expiry_date_option = option['expiry_date']
-            unique_expiry_dates.add(expiry_date_option)  # Track all unique expiry dates
-
             strike_price = option['strike_price']
             option_type = option.get('option_type', '').upper()
+
+            unique_expiry_dates.add(expiry_date_option)
 
             if not grouped_by_expiry[expiry_date_option]['expiry_date']:
                 grouped_by_expiry[expiry_date_option]['expiry_date'] = expiry_date_option
 
-            # Group by strike price and option type
+            # Find the existing entry for this strike price or create a new one
+            existing_entry = next(
+                (entry for entry in grouped_by_expiry[expiry_date_option]['options'] if entry['strike_price'] == strike_price),
+                None
+            )
+
+            if not existing_entry:
+                existing_entry = {'strike_price': strike_price, 'call': {}, 'put': {}}
+                grouped_by_expiry[expiry_date_option]['options'].append(existing_entry)
+
+            # Assign the option to call or put based on option_type
             if option_type == 'CE':
-                grouped_by_expiry[expiry_date_option]['options'].append({
-                    'strike_price': strike_price,
-                    'call': option,
-                    'put': {}
-                })
+                existing_entry['call'] = option
             elif option_type == 'PE':
-                for entry in grouped_by_expiry[expiry_date_option]['options']:
-                    if entry['strike_price'] == strike_price:
-                        entry['put'] = option
-                        break
-                else:
-                    grouped_by_expiry[expiry_date_option]['options'].append({
-                        'strike_price': strike_price,
-                        'call': {},
-                        'put': option
-                    })
+                existing_entry['put'] = option
 
         # Sort expiry dates
         sorted_expiries = sorted(unique_expiry_dates)
@@ -299,10 +299,81 @@ class GroupedOptionsView(APIView):
             for expiry_date in sorted_expiries
         ]
 
-        data = {
+        return {
             'unique_expiry_dates': sorted_expiries,  # All unique expiry dates
             'grouped_data': grouped_data  # Full grouped data
         }
+
+
+    # def get_grouped_data(self, script_name, expiry_date, include_all):
+    #     options = TradingInstrument.objects.filter(script_name=script_name, segment='OPT').values()
+
+    #     # Group data by expiry date
+    #     grouped_by_expiry = defaultdict(lambda: {'expiry_date': None, 'options': []})
+    #     unique_expiry_dates = set()  # Collect all unique expiry dates
+
+    #     for option in options:
+    #         expiry_date_option = option['expiry_date']
+    #         unique_expiry_dates.add(expiry_date_option)  # Track all unique expiry dates
+
+    #         strike_price = option['strike_price']
+    #         option_type = option.get('option_type', '').upper()
+
+    #         if not grouped_by_expiry[expiry_date_option]['expiry_date']:
+    #             grouped_by_expiry[expiry_date_option]['expiry_date'] = expiry_date_option
+
+    #         # Group by strike price and option type
+    #         if option_type == 'CE':
+    #             grouped_by_expiry[expiry_date_option]['options'].append({
+    #                 'strike_price': strike_price,
+    #                 'call': option,
+    #                 'put': {}
+    #             })
+    #         elif option_type == 'PE':
+    #             for entry in grouped_by_expiry[expiry_date_option]['options']:
+    #                 if entry['strike_price'] == strike_price:
+    #                     entry['put'] = option
+    #                     break
+    #             else:
+    #                 grouped_by_expiry[expiry_date_option]['options'].append({
+    #                     'strike_price': strike_price,
+    #                     'call': {},
+    #                     'put': option
+    #                 })
+
+    #     # Sort expiry dates
+    #     sorted_expiries = sorted(unique_expiry_dates)
+
+    #     # Handle filtering by expiry_date
+    #     if expiry_date:
+    #         if expiry_date not in grouped_by_expiry:
+    #             return {
+    #                 'unique_expiry_dates': sorted_expiries,
+    #                 'grouped_data': []
+    #             }
+    #         return {
+    #             'unique_expiry_dates': sorted_expiries,
+    #             'grouped_data': [grouped_by_expiry[expiry_date]]
+    #         }
+
+    #     nearest_expiry = sorted_expiries[0] if sorted_expiries else None
+
+    #     if not include_all:  # Return only the nearest expiry date data
+    #         return {
+    #             'unique_expiry_dates': sorted_expiries,
+    #             'grouped_data': [grouped_by_expiry[nearest_expiry]] if nearest_expiry else []
+    #         }
+
+    #     # Prepare full grouped data
+    #     grouped_data = [
+    #         grouped_by_expiry[expiry_date]
+    #         for expiry_date in sorted_expiries
+    #     ]
+
+    #     data = {
+    #         'unique_expiry_dates': sorted_expiries,  # All unique expiry dates
+    #         'grouped_data': grouped_data  # Full grouped data
+    #     }
 
         
 
