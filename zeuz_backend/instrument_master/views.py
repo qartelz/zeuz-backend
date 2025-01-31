@@ -542,7 +542,7 @@ class TradingInstrumentSearchViews(APIView):
 
         if query:
             instruments = instruments.filter(
-                Q(trading_symbol__icontains=query) |
+                Q(display_name__icontains=query) |
                 Q(script_name__icontains=query) |
                 Q(exchange__icontains=query) |
                 Q(company_name__icontains=query)
