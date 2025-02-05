@@ -26,7 +26,7 @@ def is_within_trading_hours():
     """
     current_time = datetime.now().time()
     start_time = time(9, 15)  # 9:15 AM
-    end_time = time(21, 00)   # 3:30 PM
+    end_time = time(15, 30)   # 3:30 PM
     return start_time <= current_time <= end_time
 
 async def connect_and_send_websocket(uri, auth_payload, token_id, exchange, avg_price, instance_id,ssl_context,trade_type):

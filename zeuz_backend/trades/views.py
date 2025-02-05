@@ -16,7 +16,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import TradesTaken, ClosedTrades, TradeHistory
+from .models import TradesTaken, ClosedTrades, TradeHistory, LimitOrder
 from .serializers import (
     TradesTakenSerializer,
     ClosedTradesSerializer,
@@ -638,14 +638,16 @@ class FuturesCreateView(APIView):
                     {"error": "You don't have enough coins to execute the trade."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            elif not existing_trade:
+            
+            
+            elif not existing_trade and (trade_type == "Buy" or trade_type == "Sell") :
                 print("here")
                 return Response(
                     {"error": "You don't have enough coins to execute the trade."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
         else:
-            pass
+             pass
             
         if prctype == "MKT":
 
@@ -657,15 +659,7 @@ class FuturesCreateView(APIView):
                     and existing_trade.trade_status == "incomplete"
                 ):
                     print("here")
-                    # Update the existing trade (Buy + Buy)
-                    # existing_trade.avg_price = (
-                    #     (existing_trade.avg_price) * existing_trade.quantity
-                    #     + trade_price * quantity
-                    # ) / (existing_trade.quantity + quantity)
-                    # existing_trade.quantity += quantity
-                    # existing_trade.invested_coin += invested_amount
-                    # existing_trade.margin_required += margin_required
-                    # existing_trade.save()
+                    
                     existing_trade.avg_price = (
                                 (Decimal(existing_trade.avg_price) * Decimal(existing_trade.quantity))
                                 + (Decimal(trade_price) * Decimal(quantity))
@@ -750,7 +744,7 @@ class FuturesCreateView(APIView):
 
                         profit_loss_decimal = Decimal(
                             str(profit_loss)
-                        )  # Convert profit_loss to Decimal if it's a float
+                        )  
 
                         # Perform the calculation using Decimal values
                         beetle_coins.coins += Decimal(
@@ -835,8 +829,8 @@ class FuturesCreateView(APIView):
                         )  # Convert avg_price to Decimal
 
                         # Perform the calculation
-                        beetle_coins.coins += (Decimal(existing_trade.invested_coin) + profit_loss)
-                        beetle_coins.used_coins -= Decimal(existing_trade.invested_coin)
+                        beetle_coins.coins += ((Decimal(existing_trade.quantity)*Decimal(existing_trade.avg_price)) + profit_loss)
+                        beetle_coins.used_coins -= Decimal(existing_trade.quantity)*Decimal(existing_trade.avg_price)
                         beetle_coins.save()
 
                         # Mark existing trade as complete
@@ -883,8 +877,8 @@ class FuturesCreateView(APIView):
                         )  # Convert profit_loss to Decimal if it's a float
 
                         # Perform calculations with Decimal values
-                        beetle_coins.coins += Decimal(invested_amount)
-                        beetle_coins.used_coins -= Decimal(invested_amount)
+                        beetle_coins.coins += (Decimal(existing_trade.quantity)*Decimal(existing_trade.avg_price)+profit_loss_decimal)
+                        beetle_coins.used_coins -=( Decimal(existing_trade.quantity)*Decimal(existing_trade.avg_price))
                     
                         
                         existing_trade.quantity -= quantity
@@ -970,21 +964,19 @@ class FuturesCreateView(APIView):
                             existing_trade.quantity * existing_trade.avg_price
                         )  # Reset invested amount since all bought quantity is sold
                         existing_trade.trade_status = (
-                            "complete"  # Mark the original trade as complete
+                            "complete"  
                         )
                         existing_trade.save()
 
                         # Add the profit to BeetleCoins
                         beetle_coins.coins += Decimal(
-                            quantity - remaining_quantity
-                        ) * Decimal(existing_trade.avg_price)
-                        # beetle_coins.coins += Decimal(
-                        #     quantity - remaining_quantity
-                        # ) * Decimal(existing_trade.avg_price)
+                            quantity 
+                        ) * Decimal(trade_price)
+                        
 
                         beetle_coins.used_coins += Decimal(
-                            quantity - remaining_quantity
-                        ) * Decimal(trade_price)
+                            quantity
+                        ) * Decimal(existing_trade.avg_price)
                         beetle_coins.save()
 
                         # Create a new buy trade for the remaining quantity
@@ -1132,8 +1124,14 @@ class FuturesCreateView(APIView):
                         # beetle_coins.coins += Decimal(existing_trade.invested_coin)+  Decimal(
                         #     profit_loss
                         # )
-                        beetle_coins.coins+= (Decimal(existing_trade.invested_coin)+Decimal(profit_loss))
-                        beetle_coins.used_coins -= Decimal(existing_trade.invested_coin)
+                        # beetle_coins.coins+= (Decimal(existing_trade.invested_coin)+Decimal(profit_loss))
+                        beetle_coins.coins += Decimal(quantity) * Decimal(
+                            existing_trade.avg_price
+                        ) + Decimal(profit_loss)
+                        # beetle_coins.used_coins -= Decimal(existing_trade.invested_coin)
+                        beetle_coins.used_coins -= Decimal(quantity) * Decimal(
+                            existing_trade.avg_price
+                        )
                         beetle_coins.save()
 
                         # Adjust the existing trade quantity and invested coin
@@ -3845,3 +3843,12 @@ def process_futures(data= None):
             )
         
         
+
+class UserLimitOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        limit_orders = LimitOrder.objects.filter(user=user)
+        serializer = LimitOrderSerializer(limit_orders, many=True)
+        return Response(serializer.data)
