@@ -829,7 +829,7 @@ class FuturesCreateView(APIView):
                         )  # Convert avg_price to Decimal
 
                         # Perform the calculation
-                        beetle_coins.coins += ((Decimal(existing_trade.quantity)*Decimal(existing_trade.avg_price)) + profit_loss)
+                        beetle_coins.coins += ((Decimal(existing_trade.quantity)*Decimal(existing_trade.avg_price)) + Decimal(profit_loss))
                         beetle_coins.used_coins -= Decimal(existing_trade.quantity)*Decimal(existing_trade.avg_price)
                         beetle_coins.save()
 
