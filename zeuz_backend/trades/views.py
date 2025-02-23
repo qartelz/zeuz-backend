@@ -3759,17 +3759,17 @@ def process_futures(data= None):
                     and existing_trade.trade_status == "completed"
                 ):
                     print("here")
-                    # Create a new trade since the existing one is complete
-                    data["user"] = user.id  # Associate the new trade with the user
+                   
+                    data["user"] = user.id  
                     serializer = TradesTakenSerializer(
                         data=data
-                    )  # Use serializer to validate and create new trade data
+                    )  
 
                     if serializer.is_valid():
-                        new_trade = serializer.save()  # Save the new trade
+                        new_trade = serializer.save()  
                         print(f"New trade created: {new_trade}")
 
-                        # Add the new trade to TradeHistory
+                        
                         TradeHistory.objects.create(
                             trade=new_trade,
                             trade_type=trade_type,
